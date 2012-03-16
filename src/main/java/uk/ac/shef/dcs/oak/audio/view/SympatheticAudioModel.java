@@ -13,6 +13,11 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    AudioModel sympMod;
    Map<Double, Double> syncMap = new TreeMap<Double, Double>();
 
+   public Map<Double, Double> getSyncMap()
+   {
+      return syncMap;
+   }
+
    public SympatheticAudioModel(File f, AudioModel mod, File syncDataFile)
    {
       super(f);
