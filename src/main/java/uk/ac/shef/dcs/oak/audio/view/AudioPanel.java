@@ -10,6 +10,9 @@ import javax.swing.JPanel;
 
 public class AudioPanel extends JPanel implements AudioModelListener
 {
+   int[] samples;
+   int maxVal = 0;
+
    @Override
    public void playbackUpdated()
    {
@@ -22,6 +25,9 @@ public class AudioPanel extends JPanel implements AudioModelListener
    {
       model = mod;
       mod.addListener(this);
+      samples = model.getSamples();
+      for (int val : samples)
+         maxVal = Math.max(val, maxVal);
    }
 
    @Override
@@ -37,14 +43,34 @@ public class AudioPanel extends JPanel implements AudioModelListener
       int pixPoint = (int) (model.getPlaybackPerc() * this.getWidth());
       g.drawLine(pixPoint, 0, pixPoint, this.getHeight());
       g.setColor(Color.black);
+
+      // Draw the waveform
+      int counter = samples.length / this.getWidth();
+      for (int i = 0; i < this.getWidth(); i++)
+      {
+         int sum = 0;
+         double count = 0.0;
+         for (int j = i * counter; j < Math.min((i + 1) * counter, samples.length); j++)
+         {
+            sum += Math.abs(samples[j]);
+            count += 1.0;
+         }
+
+         // Get the new point
+         // System.out.println((sum / count) + " vs" + maxVal);
+         int newPoint = (int) ((sum / count) * (this.getHeight() / 2) / maxVal);
+
+         // Plot the necessary line
+         g.drawLine(i, this.getHeight() / 2 + newPoint, i, this.getHeight() / 2 - newPoint);
+      }
    }
 
    public static void main(String[] args)
    {
       AudioModel model = new AudioModel(new File("y6.wav"));
       AudioPanel panel = new AudioPanel(model);
-      SympatheticAudioModel sympModel = new SympatheticAudioModel(
-            new File("c6-ex-match-tight.wav"), model, new File("tpath2.path"));
+      SympatheticAudioModel sympModel = new SympatheticAudioModel(new File("c6-ex-match.wav"),
+            model, new File("tpath.path"));
       AudioPanel panel2 = new AudioPanel(sympModel);
       LinkerPanel panel3 = new LinkerPanel(sympModel);
 
@@ -57,6 +83,8 @@ public class AudioPanel extends JPanel implements AudioModelListener
       framer.setLocationRelativeTo(null);
       framer.setVisible(true);
       framer.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+      framer.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
       model.play();
    }

@@ -18,6 +18,7 @@ public class AudioModel
    boolean playing = false;
    List<AudioModelListener> listeners = new LinkedList<AudioModelListener>();
    boolean running = true;
+   File audioF;
 
    public void addListener(AudioModelListener listener)
    {
@@ -26,6 +27,7 @@ public class AudioModel
 
    public AudioModel(File audioFile)
    {
+      audioF = audioFile;
       loadFile(audioFile);
 
       Thread updateThread = new Thread(new Runnable()
@@ -73,6 +75,12 @@ public class AudioModel
    public double getPlaybackPerc()
    {
       return (audioPlayer.getMediaTime().getSeconds()) / audioPlayer.getDuration().getSeconds();
+   }
+
+   public int[] getSamples()
+   {
+      WavReader reader = new WavReader(audioF);
+      return reader.getSamples();
    }
 
    private void loadFile(File audioFile)
