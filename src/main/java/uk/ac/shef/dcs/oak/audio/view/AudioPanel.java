@@ -44,7 +44,7 @@ public class AudioPanel extends JPanel implements AudioModelListener
       AudioModel model = new AudioModel(new File("y4.wav"));
       AudioPanel panel = new AudioPanel(model);
       AudioModel sympModel = new SympatheticAudioModel(new File("c6-ex-match.wav"), model,
-            new File("tpath.txt"));
+            new File("tpath.path"));
       AudioPanel panel2 = new AudioPanel(sympModel);
 
       JFrame framer = new JFrame();
