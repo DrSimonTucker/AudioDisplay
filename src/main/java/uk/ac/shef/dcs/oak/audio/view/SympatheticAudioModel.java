@@ -15,6 +15,7 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    Map<Double, Double> adjMap = null;
    int[] cutSamples;
    boolean stretch = true;
+   double lowerBound = 0.05;
 
    public Map<Double, Double> getSyncMap()
    {
@@ -28,12 +29,7 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
             adjMap = new TreeMap<Double, Double>();
             double bound = syncMap.get(1.0);
             for (Entry<Double, Double> entry : syncMap.entrySet())
-               adjMap.put(entry.getKey(), entry.getValue() / bound);
-
-            System.out.println("Here");
-            System.out.println(resolveSyncMap(0.0));
-            System.exit(1);
-
+               adjMap.put(entry.getKey(), (entry.getValue() - lowerBound) / (bound - lowerBound));
          }
          return adjMap;
       }
@@ -57,9 +53,12 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
          if (cutSamples == null)
          {
             int[] masterSamples = super.getSamples();
-            cutSamples = new int[(int) (masterSamples.length * resolveSyncMap(1.0, true))];
-            for (int i = 0; i < cutSamples.length; i++)
-               cutSamples[i] = masterSamples[i];
+            int offset = ((int) (lowerBound * masterSamples.length));
+            System.out.println("OFFSET = " + offset);
+            cutSamples = new int[(int) (masterSamples.length * (resolveSyncMap(1.0, true)))
+                  - offset];
+            for (int i = offset; i < (cutSamples.length + offset); i++)
+               cutSamples[i - offset] = masterSamples[i];
          }
          return cutSamples;
       }
