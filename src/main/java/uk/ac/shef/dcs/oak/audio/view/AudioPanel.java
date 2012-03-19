@@ -3,6 +3,8 @@ package uk.ac.shef.dcs.oak.audio.view;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 
 import javax.swing.JFrame;
@@ -26,8 +28,19 @@ public class AudioPanel extends JPanel implements AudioModelListener
       model = mod;
       mod.addListener(this);
       samples = model.getSamples();
+      System.out.println(this + " => " + samples.length);
       for (int val : samples)
          maxVal = Math.max(val, maxVal);
+
+      addMouseListener(new MouseAdapter()
+      {
+         @Override
+         public void mouseClicked(MouseEvent e)
+         {
+            double perc = (e.getX() + 0.0) / getWidth();
+            System.out.println(perc + " => ");
+         }
+      });
    }
 
    @Override

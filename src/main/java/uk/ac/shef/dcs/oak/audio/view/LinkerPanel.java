@@ -23,13 +23,11 @@ public class LinkerPanel extends JPanel
       // Draw in the connector lines
       double matcher = 0;
       for (Entry<Double, Double> entry : syncMap.entrySet())
-      {
          if (entry.getKey() > matcher)
          {
             g.drawLine((int) (entry.getKey() * this.getWidth()), 0,
                   (int) (entry.getValue() * this.getWidth()), this.getHeight());
             matcher += 0.1;
          }
-      }
    }
 }

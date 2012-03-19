@@ -12,10 +12,33 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
 {
    AudioModel sympMod;
    Map<Double, Double> syncMap = new TreeMap<Double, Double>();
+   Map<Double, Double> adjMap = null;
+   int[] cutSamples;
+   boolean stretch = true;
 
    public Map<Double, Double> getSyncMap()
    {
-      return syncMap;
+      // Adjust the syncMap if stretched
+      if (stretch)
+      {
+         if (adjMap == null)
+         {
+            System.out.println("Getting adj map");
+
+            adjMap = new TreeMap<Double, Double>();
+            double bound = syncMap.get(1.0);
+            for (Entry<Double, Double> entry : syncMap.entrySet())
+               adjMap.put(entry.getKey(), entry.getValue() / bound);
+
+            System.out.println("Here");
+            System.out.println(resolveSyncMap(0.0));
+            System.exit(1);
+
+         }
+         return adjMap;
+      }
+      else
+         return syncMap;
    }
 
    public SympatheticAudioModel(File f, AudioModel mod, File syncDataFile)
@@ -24,6 +47,24 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
       mod.addListener(this);
       loadSyncMap(syncDataFile);
       sympMod = mod;
+   }
+
+   @Override
+   public int[] getSamples()
+   {
+      if (stretch)
+      {
+         if (cutSamples == null)
+         {
+            int[] masterSamples = super.getSamples();
+            cutSamples = new int[(int) (masterSamples.length * resolveSyncMap(1.0, true))];
+            for (int i = 0; i < cutSamples.length; i++)
+               cutSamples[i] = masterSamples[i];
+         }
+         return cutSamples;
+      }
+      else
+         return super.getSamples();
    }
 
    @Override
@@ -39,7 +80,7 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
          double topLeft = 459;
          double topRight = 599;
          BufferedReader reader = new BufferedReader(new FileReader(f));
-         syncMap.put(0.0, 0.0);
+         // syncMap.put(0.0, 0.0);
          syncMap.put(1.0, 1.0);
          for (String line = reader.readLine(); line != null; line = reader.readLine())
          {
@@ -58,25 +99,46 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
 
    private double resolveSyncMap(double perc)
    {
+      return resolveSyncMap(perc, false);
+   }
+
+   private double resolveSyncMap(double perc, boolean forceOld)
+   {
       Double closestBelow = 1.0;
       Double bestMatchBelow = 0.0;
       Double closestAbove = 1.0;
       Double bestMatchAbove = 1.0;
 
-      for (Entry<Double, Double> entry : syncMap.entrySet())
-      {
-         double diff = perc - entry.getKey();
-         if (diff >= 0 && diff < closestBelow)
+      if (!forceOld)
+         for (Entry<Double, Double> entry : getSyncMap().entrySet())
          {
-            closestBelow = diff;
-            bestMatchBelow = entry.getValue();
+            double diff = perc - entry.getKey();
+            if (diff >= 0 && diff < closestBelow)
+            {
+               closestBelow = diff;
+               bestMatchBelow = entry.getValue();
+            }
+            if (diff <= 0 && Math.abs(diff) < closestAbove)
+            {
+               closestAbove = diff;
+               bestMatchAbove = entry.getValue();
+            }
          }
-         if (diff <= 0 && Math.abs(diff) < closestAbove)
+      else
+         for (Entry<Double, Double> entry : syncMap.entrySet())
          {
-            closestAbove = diff;
-            bestMatchAbove = entry.getValue();
+            double diff = perc - entry.getKey();
+            if (diff >= 0 && diff < closestBelow)
+            {
+               closestBelow = diff;
+               bestMatchBelow = entry.getValue();
+            }
+            if (diff <= 0 && Math.abs(diff) < closestAbove)
+            {
+               closestAbove = diff;
+               bestMatchAbove = entry.getValue();
+            }
          }
-      }
 
       return (bestMatchAbove + bestMatchBelow) / 2;
    }

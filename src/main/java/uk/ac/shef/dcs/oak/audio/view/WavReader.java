@@ -97,7 +97,7 @@ class WavReader
          msg_assert(s.equals("RIFF"), "missing \"RIFF\" tag in RIFF chunk");
 
          pkglen = readLEint(fis);
-         System.err.println("Pkglen = " + pkglen);
+         // System.err.println("Pkglen = " + pkglen);
 
          s = readString(fis);
          msg_assert(s.equals("WAVE"), "missing \"WAVE\" tag in RIFF chunk");
@@ -114,15 +114,15 @@ class WavReader
          msg_assert(lin == 1, "code for nonlinear quantization: " + lin);
 
          channels = readLEshort(fis);
-         System.err.println("number of channels = " + channels);
+         // System.err.println("number of channels = " + channels);
 
          sampleRate = readLEint(fis);
-         System.err.println("sample rate: " + sampleRate);
+         // System.err.println("sample rate: " + sampleRate);
 
          int Bpsec = readLEint(fis);
 
          sampleSize = readLEshort(fis);
-         System.err.println("Bytes per sample: " + sampleSize);
+         // System.err.println("Bytes per sample: " + sampleSize);
 
          msg_assert(Bpsec == sampleRate * sampleSize, "inconsistent Bytes/sec: given: " + Bpsec
                + ", computed: " + sampleRate * sampleSize);
@@ -138,7 +138,8 @@ class WavReader
 
          int size = readLEint(fis);
          numSamples = size / channels / sampleSize;
-         System.err.println("Number of samples according to header: " + numSamples);
+         // System.err.println("Number of samples according to header: " +
+         // numSamples);
          return true;
       }
       catch (IOException ioe)
