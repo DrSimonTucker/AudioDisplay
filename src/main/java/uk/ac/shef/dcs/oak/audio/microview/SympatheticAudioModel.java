@@ -1,4 +1,4 @@
-package uk.ac.shef.dcs.oak.audio.view;
+package uk.ac.shef.dcs.oak.audio.microview;
 
 import java.io.BufferedReader;
 import java.io.File;

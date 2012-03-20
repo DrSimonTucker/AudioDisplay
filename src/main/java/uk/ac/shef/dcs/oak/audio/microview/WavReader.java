@@ -1,4 +1,4 @@
-package uk.ac.shef.dcs.oak.audio.view;
+package uk.ac.shef.dcs.oak.audio.microview;
 
 /*
  * This class allows reading of samples of a WAV file.
