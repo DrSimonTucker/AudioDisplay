@@ -1,6 +1,5 @@
 package uk.ac.shef.dcs.oak.audio.macroview;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.GridLayout;
@@ -8,8 +7,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -25,16 +22,10 @@ import java.util.Map.Entry;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 public class AudioSectionPanel extends JPanel
 {
-   /**
-	 * 
-	 */
-   private static final long serialVersionUID = 1464088055416062558L;
-
    int BUFFER = 5;
    private AudioSection chosen;
    int chosenIndex = -1;
@@ -44,13 +35,15 @@ public class AudioSectionPanel extends JPanel
    double maxBar = 1000;
    int maxIndex = 0;
    Map<AudioSection, AudioSectionPanel> panelMap = new HashMap<AudioSection, AudioSectionPanel>();
+   MacroDerivedView parent;
    List<AudioSection> performance;
    List<AudioSection> sections = new LinkedList<AudioSection>();
    AudioSection[] selected = new AudioSection[2];
    int selectedPointer = 0;
 
-   public AudioSectionPanel()
+   public AudioSectionPanel(MacroDerivedView par)
    {
+      parent = par;
       this.addMouseListener(new MouseAdapter()
       {
          @Override
@@ -296,36 +289,9 @@ public class AudioSectionPanel extends JPanel
             count++;
 
       if (count > 0 && count < 3)
-         System.out.println("Zoom");
+         parent.zoom();
    }
 
-   public static void main(String[] args)
-   {
-      JFrame framer = new JFrame();
-      framer.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      final AudioSectionPanel sectionPanel = new AudioSectionPanel();
-      SelectionPanel selectionPanel = new SelectionPanel(sectionPanel);
-      sectionPanel.loadData("Haydn", 1);
-      framer.add(sectionPanel, BorderLayout.CENTER);
-      framer.add(selectionPanel, BorderLayout.NORTH);
-      framer.setSize(500, 522);
-      framer.setLocationRelativeTo(null);
-      framer.setVisible(true);
-
-      framer.setFocusable(true);
-      framer.addKeyListener(new KeyAdapter()
-      {
-
-         @Override
-         public void keyPressed(KeyEvent e)
-         {
-            System.err.println("Pressed " + e.getKeyCode() + "/" + KeyEvent.VK_S);
-            if (e.getKeyCode() == KeyEvent.VK_S)
-               sectionPanel.stop();
-         }
-
-      });
-   }
 }
 
 class Cursor

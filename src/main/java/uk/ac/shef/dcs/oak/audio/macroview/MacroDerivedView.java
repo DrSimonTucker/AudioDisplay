@@ -12,9 +12,27 @@ import java.util.List;
 
 import javax.swing.JFrame;
 
-public class MacroDerivedView
+import uk.ac.shef.dcs.oak.audio.microview.MicroView;
+
+public class MacroDerivedView extends JFrame
 {
-   public static void main(String[] args) throws IOException
+   MicroView micro;
+
+   AudioSectionPanel sectionPanel;
+
+   public MacroDerivedView()
+   {
+      try
+      {
+         build();
+      }
+      catch (IOException e)
+      {
+         e.printStackTrace();
+      }
+   }
+
+   private void build() throws IOException
    {
       // Load in the performance
       AudioSection performance = new AudioSection();
@@ -52,24 +70,22 @@ public class MacroDerivedView
          rehearsals.add(rehearsal);
       }
 
-      JFrame framer = new JFrame();
-      framer.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      final AudioSectionPanel sectionPanel = new AudioSectionPanel();
+      this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      sectionPanel = new AudioSectionPanel(this);
       SelectionPanel selectionPanel = new SelectionPanel(sectionPanel);
       // sectionPanel.loadData("Haydn", 1);
 
       sectionPanel.setPerformance(perfSections);
       for (AudioSection section : rehearsals)
          sectionPanel.addAudio(section);
-      framer.add(sectionPanel, BorderLayout.CENTER);
-      framer.add(selectionPanel, BorderLayout.NORTH);
-      framer.setSize(500, 522);
-      framer.setLocationRelativeTo(null);
-      framer.setVisible(true);
+      this.add(sectionPanel, BorderLayout.CENTER);
+      this.add(selectionPanel, BorderLayout.NORTH);
+      this.setSize(500, 522);
+      this.setLocationRelativeTo(null);
 
-      framer.setFocusable(true);
+      this.setFocusable(true);
       // framer.setExtendedState(JFrame.MAXIMIZED_BOTH);
-      framer.addKeyListener(new KeyAdapter()
+      this.addKeyListener(new KeyAdapter()
       {
 
          @Override
@@ -81,5 +97,23 @@ public class MacroDerivedView
          }
 
       });
+   }
+
+   public void zoom()
+   {
+      // Build the necessary micro view
+      micro = new MicroView();
+
+      // Flip the two displays
+      this.remove(sectionPanel);
+      this.add(micro, BorderLayout.CENTER);
+
+      this.validate();
+   }
+
+   public static void main(String[] args)
+   {
+      MacroDerivedView mine = new MacroDerivedView();
+      mine.setVisible(true);
    }
 }
