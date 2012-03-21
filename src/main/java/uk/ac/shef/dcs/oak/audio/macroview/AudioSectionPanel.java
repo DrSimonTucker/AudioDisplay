@@ -44,8 +44,9 @@ public class AudioSectionPanel extends JPanel
    int maxIndex = 0;
    Map<AudioSection, AudioSectionPanel> panelMap = new HashMap<AudioSection, AudioSectionPanel>();
    List<AudioSection> performance;
-
    List<AudioSection> sections = new LinkedList<AudioSection>();
+   AudioSection[] selected = new AudioSection[2];
+   int selectedPointer = 0;
 
    public AudioSectionPanel()
    {
@@ -55,7 +56,10 @@ public class AudioSectionPanel extends JPanel
          @Override
          public void mousePressed(MouseEvent e)
          {
-            selectionTest(new Point(e.getX(), e.getY()));
+            if (e.getButton() == 0)
+               leftClick(new Point(e.getX(), e.getY()));
+            else
+               rightClick(new Point(e.getX(), e.getY()));
             repaint();
          }
 
@@ -83,6 +87,35 @@ public class AudioSectionPanel extends JPanel
             sect.playBar(bar, panelMap.get(sect));
             break;
          }
+      }
+   }
+
+   private void leftClick(Point mPoint)
+   {
+      if (cursor.section != null)
+         cursor.section.stop();
+
+      // Locate the AudioSelection chosen
+      chosen = null;
+      double perc = 0.0;
+      Rectangle rectang = null;
+
+      for (Entry<Rectangle, AudioSection> entry : mapper.entrySet())
+      {
+         Rectangle rect = entry.getKey();
+         if (rect.contains(mPoint))
+         {
+            chosen = entry.getValue();
+            perc = (mPoint.getX() - rect.getMinX() + 0.0) / rect.getWidth();
+            rectang = rect;
+         }
+      }
+
+      // Move the cursor
+      if (chosen != null)
+      {
+         cursor.moveCursor(chosen, perc, rectang, this);
+         chosen.play(perc, this);
       }
    }
 
@@ -204,32 +237,39 @@ public class AudioSectionPanel extends JPanel
       g.setColor(tCol);
    }
 
-   private void selectionTest(Point mPoint)
+   private void rightClick(Point mPoint)
    {
-      if (cursor.section != null)
-         cursor.section.stop();
-
       // Locate the AudioSelection chosen
       chosen = null;
-      double perc = 0.0;
-      Rectangle rectang = null;
 
       for (Entry<Rectangle, AudioSection> entry : mapper.entrySet())
       {
          Rectangle rect = entry.getKey();
          if (rect.contains(mPoint))
-         {
             chosen = entry.getValue();
-            perc = (mPoint.getX() - rect.getMinX() + 0.0) / rect.getWidth();
-            rectang = rect;
-         }
       }
 
-      // Move the cursor
-      if (chosen != null)
+      // Alter the colour
+      chosen.toggleSelect();
+
+      // Update the selected matrix
+      int arrIndex = -1;
+      for (int i = 0; i < selected.length; i++)
+         if (selected[i] == chosen)
+            arrIndex = i;
+      if (arrIndex >= 0)
       {
-         cursor.moveCursor(chosen, perc, rectang, this);
-         chosen.play(perc, this);
+         selected[arrIndex] = null;
+         selectedPointer = (arrIndex - 1) % selected.length;
+      }
+      else
+      {
+         int addPos = (selectedPointer + 1) % selected.length;
+         AudioSection lastChosen = selected[addPos];
+         if (lastChosen != null)
+            lastChosen.toggleSelect();
+         selected[addPos] = chosen;
+         selectedPointer = addPos;
       }
    }
 
