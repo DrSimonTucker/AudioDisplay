@@ -49,7 +49,7 @@ public class AudioSectionPanel extends JPanel
          @Override
          public void mousePressed(MouseEvent e)
          {
-            if (e.getButton() == 0)
+            if (e.getButton() == 1)
                leftClick(new Point(e.getX(), e.getY()));
             else
                rightClick(new Point(e.getX(), e.getY()));
