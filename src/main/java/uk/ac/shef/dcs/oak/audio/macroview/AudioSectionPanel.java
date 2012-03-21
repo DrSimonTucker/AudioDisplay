@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -52,7 +53,6 @@ public class AudioSectionPanel extends JPanel
    {
       this.addMouseListener(new MouseAdapter()
       {
-
          @Override
          public void mousePressed(MouseEvent e)
          {
@@ -62,9 +62,7 @@ public class AudioSectionPanel extends JPanel
                rightClick(new Point(e.getX(), e.getY()));
             repaint();
          }
-
       });
-
    }
 
    public void addAudio(AudioSection section)
@@ -289,6 +287,18 @@ public class AudioSectionPanel extends JPanel
       repaint();
    }
 
+   public void zoom()
+   {
+      // Need to have at least one audio sections to zoom
+      int count = 0;
+      for (AudioSection section : selected)
+         if (section != null)
+            count++;
+
+      if (count > 0 && count < 3)
+         System.out.println("Zoom");
+   }
+
    public static void main(String[] args)
    {
       JFrame framer = new JFrame();
@@ -362,6 +372,7 @@ class SelectionPanel extends JPanel
 {
    JComboBox comboComposer, comboMovement;
    AudioSectionPanel panel;
+   JButton zoomButton;
 
    public SelectionPanel(AudioSectionPanel in)
    {
@@ -371,16 +382,11 @@ class SelectionPanel extends JPanel
 
    private void initDisplay()
    {
-      this.setLayout(new GridLayout(1, 2));
+      this.setLayout(new GridLayout(1, 3));
 
       comboComposer = new JComboBox(new String[]
       { "Haydn" });
       this.add(comboComposer);
-
-      comboMovement = new JComboBox(new String[]
-      { "2" });
-      this.add(comboMovement);
-
       comboComposer.addActionListener(new ActionListener()
       {
 
@@ -392,6 +398,9 @@ class SelectionPanel extends JPanel
 
       });
 
+      comboMovement = new JComboBox(new String[]
+      { "2" });
+      this.add(comboMovement);
       comboMovement.addActionListener(new ActionListener()
       {
 
@@ -401,6 +410,17 @@ class SelectionPanel extends JPanel
             reset();
          }
 
+      });
+
+      zoomButton = new JButton("Zoom");
+      this.add(zoomButton);
+      zoomButton.addActionListener(new ActionListener()
+      {
+         @Override
+         public void actionPerformed(ActionEvent arg0)
+         {
+            panel.zoom();
+         }
       });
 
    }

@@ -68,6 +68,7 @@ public class MacroDerivedView
       framer.setVisible(true);
 
       framer.setFocusable(true);
+      // framer.setExtendedState(JFrame.MAXIMIZED_BOTH);
       framer.addKeyListener(new KeyAdapter()
       {
 
