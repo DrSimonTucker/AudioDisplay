@@ -39,9 +39,9 @@ public class MacroDerivedView
          double perc = Double.parseDouble(elems[2]);
 
          AudioSection rehearsal = new AudioSection();
-         rehearsal.setAudioFile("y" + number);
+         rehearsal.setAudioFile("y" + number + ".wav");
          rehearsal.setStartBar(1000 * perc);
-         rehearsal.setEndBar(-1);
+         rehearsal.setEndBar(-performance.getLength());
          rehearsal.setPiece("Haydn");
          rehearsal.setIndex(number);
          rehearsal.setLength(-1);

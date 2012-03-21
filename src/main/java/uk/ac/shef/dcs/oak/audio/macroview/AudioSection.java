@@ -67,6 +67,13 @@ public class AudioSection
 
    public double getEndBar()
    {
+      if (endBar < 0)
+      {
+         // Compute the end bar
+         double length = 0 - endBar;
+         double numBars = getLength() * 1000 / length;
+         endBar = startBar + numBars;
+      }
       return endBar;
    }
 
