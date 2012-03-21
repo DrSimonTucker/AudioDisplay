@@ -21,10 +21,10 @@ public class AudioSection
    private long offset;
    private String piece;
    private final AudioSection preceeding = null;
-
    private String rehearsal;
-
    private int repeat = 0;
+   private final Color selColor = Color.green;
+   private boolean selected = false;
    private double startBar;
 
    public AudioSection()
@@ -62,7 +62,10 @@ public class AudioSection
 
    public Color getCol()
    {
-      return col;
+      if (selected)
+         return selColor;
+      else
+         return col;
    }
 
    public double getEndBar()
@@ -256,5 +259,10 @@ public class AudioSection
    public void stop()
    {
       aPlayer.stop();
+   }
+
+   public void toggleSelect()
+   {
+      selected = !selected;
    }
 }
