@@ -36,19 +36,19 @@ public class FileParser
          if (elems.length >= 10)
          {
             AudioSection section = new AudioSection();
-            section.audioFile = null;
+            section.setAudioFile(null);
             if (!elems[4].equals("end") && !elems[4].equals("//"))
-               section.endBar = Integer.parseInt(elems[4]);
-            section.index = index;
+               section.setEndBar(Integer.parseInt(elems[4]));
+            section.setIndex(index);
             if (!elems[1].equals("//") && !elems[0].equals("//"))
-               section.length = timeConvert(elems[1]) - timeConvert(elems[0]);
-            section.movement = Integer.parseInt(elems[9]);
-            section.offset = timeConvert(elems[0]);
-            section.piece = elems[8];
+               section.setLength(timeConvert(elems[1]) - timeConvert(elems[0]));
+            section.setMovement(Integer.parseInt(elems[9]));
+            section.setOffset(timeConvert(elems[0]));
+            section.setPiece(elems[8]);
             if (!elems[2].equals("//"))
-               section.startBar = Integer.parseInt(elems[2]);
-            section.rehearsal = elems[7];
-            section.repeat = 0;
+               section.setStartBar(Integer.parseInt(elems[2]));
+            section.setRehearsal(elems[7]);
+            section.setRepeat(0);
 
             sections.add(section);
          }

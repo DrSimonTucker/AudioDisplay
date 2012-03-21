@@ -27,21 +27,67 @@ import javax.sound.sampled.AudioSystem;
 class WavReader
 {
 
-   private FileInputStream fis;
-   private int pkglen, channels, sampleRate, sampleSize, // Bytes per sample
+   /*
+    * The following class wraps around a short[] and makes it an InputStream,
+    * returning first the lo byte and then the hi. byte lo = (byte) (sa[i] &
+    * 0xFF); byte hi = (byte) ((sa[i] >> 8) & 0xFF);
+    */
+   static class Short2InputStream extends InputStream
+   {
+      private int index;
+      private boolean islow; // next byte is low
+      byte lo, hi;
+      int readcount = 0;
+      private final short[] sa;
+
+      public Short2InputStream(short[] samples)
+      {
+         sa = samples;
+         index = 0; // next index
+         islow = true; // next byte is low
+      }
+
+      public void printstats()
+      {
+         System.err.println("Short2InputStream: # reads = " + readcount + ", len=" + sa.length
+               + ", index=" + index);
+      }
+
+      @Override
+      public int read()
+      {
+         readcount++;
+         if (index >= sa.length)
+            return -1; // end of file
+         else if (islow)
+         {
+            lo = (byte) (sa[index] & 0xFF);
+            hi = (byte) ((sa[index] >> 8) & 0xFF);
+            islow = false;
+            return (lo & 0xFF); // stupid sign extension
+         }
+         else
+         { // is high
+            index++;
+            islow = true;
+            return hi & 0xFF; // ditto
+         }
+      }
+
+      /*
+       * public int read(byte[] b, int off, int len) throws NullPointerException
+       * { for (int i = 0; i < len; i++) { int val = read(); if (val == -1) { //
+       * eof if (i==0) return -1; return 0; } b[off+i] = (byte) val; } return
+       * len; } /*
+       */
+   }
+
+   private int channels, sampleRate, sampleSize, // Bytes per sample
          numSamples;
 
    /* ctors */
 
-   public WavReader(FileInputStream thefis)
-   {
-      fis = thefis;
-      boolean ok = readHeader();
-      if (!ok)
-      {
-         System.err.println("bad header!");
-      }
-   }
+   private FileInputStream fis;
 
    public WavReader(File f)
    {
@@ -70,6 +116,87 @@ class WavReader
     * readHeader processes the header
     */
 
+   public WavReader(FileInputStream thefis)
+   {
+      fis = thefis;
+      boolean ok = readHeader();
+      if (!ok)
+         System.err.println("bad header!");
+   }
+
+   /*
+    * getters for the fields above
+    */
+   public int getChannels()
+   {
+      return channels;
+   }
+
+   public int getNumSamples()
+   {
+      return numSamples;
+   }
+
+   public int getSampleRate()
+   {
+      return sampleRate;
+   }
+
+   public int[] getSamples()
+   {
+      int[] samples = new int[numSamples];
+      for (int i = 0; i < numSamples; i++)
+         try
+         {
+            samples[i] = readValue();
+         }
+         catch (IOException ioe)
+         {
+            System.err.println("WavReader.getSamples: problem at position " + i + " out of "
+                  + numSamples);
+            while (i < numSamples)
+            {
+               samples[i] = 0;
+               i++;
+            }
+         }
+      return samples;
+   }
+
+   /*
+    * form of assert
+    */
+
+   public int getSampleSize()
+   {
+      return sampleSize;
+   }
+
+   /*
+    * reads a 4-byte string from the file and returns it
+    */
+
+   public short[] getShortSamples()
+   {
+      short[] samples = new short[numSamples];
+      for (int i = 0; i < numSamples; i++)
+         try
+         {
+            samples[i] = (short) readValue();
+         }
+         catch (IOException ioe)
+         {
+            System.err.println("WavReader.getSamples: problem at position " + i + " out of "
+                  + numSamples);
+            while (i < numSamples)
+            {
+               samples[i] = 0;
+               i++;
+            }
+         }
+      return samples;
+   }
+
    private boolean readHeader()
    {
       // AudioInputStream ais = new AudioInputStream(is, );
@@ -96,7 +223,7 @@ class WavReader
          String s = readString(fis);
          msg_assert(s.equals("RIFF"), "missing \"RIFF\" tag in RIFF chunk");
 
-         pkglen = readLEint(fis);
+         readLEint(fis);
          // System.err.println("Pkglen = " + pkglen);
 
          s = readString(fis);
@@ -150,32 +277,80 @@ class WavReader
 
    }
 
-   /*
-    * getters for the fields above
-    */
-   public int getChannels()
+   public int readValue() throws IOException
    {
-      return channels;
-   }
-
-   public int getSampleRate()
-   {
-      return sampleRate;
-   }
-
-   public int getSampleSize()
-   {
-      return sampleSize;
-   }
-
-   public int getNumSamples()
-   {
-      return numSamples;
+      return readValue(sampleSize);
    }
 
    /*
-    * form of assert
+    * The following reads the next sound sample, of the specified size
     */
+   public int readValue(int vsize) throws IOException
+   {
+      if (vsize == 1)
+         return (fis.read());
+      else if (vsize == 2)
+         return (short) readLEshort(fis);
+      else if (vsize == 4)
+         return readLEint(fis);
+      else
+      {
+         System.out.println("bad value size = " + vsize + " given to readValue");
+         return -1;
+      }
+   }
+
+   /*
+    * The following adjusts the volume by the indicated factor
+    */
+   public static void adjustVolume(double adjFactor, int[] samples)
+   {
+      for (int i = 0; i < samples.length; i++)
+         samples[i] = (int) (samples[i] * adjFactor);
+   }
+
+   /*
+    * getSamples returns an array of all the samples
+    */
+
+   // short[] version
+   public static void adjustVolume(double adjFactor, short[] samples)
+   {
+      for (int i = 0; i < samples.length; i++)
+         samples[i] = (short) (samples[i] * adjFactor);
+   }
+
+   /*
+    * getShortSamples returns an array of short of all the samples
+    */
+
+   /*
+    * The following eliminates the DC bias
+    */
+   public static void DCzero(int[] samples)
+   {
+      long sum = 0;
+      for (int i = 0; i < samples.length; i++)
+         sum += samples[i];
+      int bias = (int) (sum / samples.length);
+      for (int i = 0; i < samples.length; i++)
+         samples[i] -= bias;
+   }
+
+   /*
+    * some static utility methods
+    */
+
+   // short[] version
+   public static void DCzero(short[] samples)
+   {
+      long sum = 0;
+      for (int i = 0; i < samples.length; i++)
+         sum += samples[i];
+      int bias = (int) (sum / samples.length);
+      for (int i = 0; i < samples.length; i++)
+         samples[i] -= bias;
+   }
 
    private static void msg_assert(boolean cond, String message) throws IOException
    {
@@ -185,130 +360,6 @@ class WavReader
          throw new IOException();
       }
    }
-
-   /*
-    * reads a 4-byte string from the file and returns it
-    */
-
-   private static String readString(InputStream fis) throws IOException
-   {
-      byte[] buf = new byte[4];
-      int bytesread = fis.read(buf, 0, 4);
-      if (bytesread != 4)
-         throw new IOException();
-      return new String(buf);
-   }
-
-   /*
-    * reads a 4-byte little-endian integer from the file and returns it
-    */
-   private static int readLEint(InputStream fis) throws IOException
-   {
-      byte[] buf = new byte[4];
-      int bytesread = fis.read(buf, 0, 4);
-      if (bytesread != 4)
-         throw new IOException();
-      return (((buf[3] & 0xff) << 24) | ((buf[2] & 0xff) << 16) | ((buf[1] & 0xff) << 8) | ((buf[0] & 0xff)));
-   }
-
-   /*
-    * reads a 2-byte little-endian integer from the file and returns it
-    */
-   private static int readLEshort(InputStream fis) throws IOException
-   {
-      byte[] buf = new byte[2];
-      int bytesread = fis.read(buf, 0, 2);
-      if (bytesread != 2)
-         throw new IOException();
-      return (((buf[1] & 0xff) << 8) | ((buf[0] & 0xff)));
-   }
-
-   /*
-    * The following reads the next sound sample, of the specified size
-    */
-   public int readValue(int vsize) throws IOException
-   {
-      if (vsize == 1)
-      {
-         return (fis.read());
-      }
-      else if (vsize == 2)
-      {
-         return (short) readLEshort(fis);
-      }
-      else if (vsize == 4)
-      {
-         return readLEint(fis);
-      }
-      else
-      {
-         System.out.println("bad value size = " + vsize + " given to readValue");
-         return -1;
-      }
-   }
-
-   public int readValue() throws IOException
-   {
-      return readValue(sampleSize);
-   }
-
-   /*
-    * getSamples returns an array of all the samples
-    */
-
-   public int[] getSamples()
-   {
-      int[] samples = new int[numSamples];
-      for (int i = 0; i < numSamples; i++)
-      {
-         try
-         {
-            samples[i] = readValue();
-         }
-         catch (IOException ioe)
-         {
-            System.err.println("WavReader.getSamples: problem at position " + i + " out of "
-                  + numSamples);
-            while (i < numSamples)
-            {
-               samples[i] = 0;
-               i++;
-            }
-         }
-      }
-      return samples;
-   }
-
-   /*
-    * getShortSamples returns an array of short of all the samples
-    */
-
-   public short[] getShortSamples()
-   {
-      short[] samples = new short[numSamples];
-      for (int i = 0; i < numSamples; i++)
-      {
-         try
-         {
-            samples[i] = (short) readValue();
-         }
-         catch (IOException ioe)
-         {
-            System.err.println("WavReader.getSamples: problem at position " + i + " out of "
-                  + numSamples);
-            while (i < numSamples)
-            {
-               samples[i] = 0;
-               i++;
-            }
-         }
-      }
-      return samples;
-   }
-
-   /*
-    * some static utility methods
-    */
 
    public static void printstats(int[] samples)
    {
@@ -398,61 +449,42 @@ class WavReader
    }
 
    /*
-    * The following eliminates the DC bias
+    * reads a 4-byte little-endian integer from the file and returns it
     */
-   public static void DCzero(int[] samples)
+   private static int readLEint(InputStream fis) throws IOException
    {
-      long sum = 0;
-      for (int i = 0; i < samples.length; i++)
-      {
-         sum += samples[i];
-      }
-      int bias = (int) (sum / samples.length);
-      for (int i = 0; i < samples.length; i++)
-      {
-         samples[i] -= bias;
-      }
-   }
-
-   // short[] version
-   public static void DCzero(short[] samples)
-   {
-      long sum = 0;
-      for (int i = 0; i < samples.length; i++)
-      {
-         sum += samples[i];
-      }
-      int bias = (int) (sum / samples.length);
-      for (int i = 0; i < samples.length; i++)
-      {
-         samples[i] -= bias;
-      }
+      byte[] buf = new byte[4];
+      int bytesread = fis.read(buf, 0, 4);
+      if (bytesread != 4)
+         throw new IOException();
+      return (((buf[3] & 0xff) << 24) | ((buf[2] & 0xff) << 16) | ((buf[1] & 0xff) << 8) | ((buf[0] & 0xff)));
    }
 
    /*
-    * The following adjusts the volume by the indicated factor
+    * reads a 2-byte little-endian integer from the file and returns it
     */
-   public static void adjustVolume(double adjFactor, int[] samples)
+   private static int readLEshort(InputStream fis) throws IOException
    {
-      for (int i = 0; i < samples.length; i++)
-      {
-         samples[i] = (int) (samples[i] * adjFactor);
-      }
-   }
-
-   // short[] version
-   public static void adjustVolume(double adjFactor, short[] samples)
-   {
-      for (int i = 0; i < samples.length; i++)
-      {
-         samples[i] = (short) (samples[i] * adjFactor);
-      }
+      byte[] buf = new byte[2];
+      int bytesread = fis.read(buf, 0, 2);
+      if (bytesread != 2)
+         throw new IOException();
+      return (((buf[1] & 0xff) << 8) | ((buf[0] & 0xff)));
    }
 
    /*
     * The following converts a sample[] to a .wav file, using the native java
     * methods (rather than writing directly)
     */
+
+   private static String readString(InputStream fis) throws IOException
+   {
+      byte[] buf = new byte[4];
+      int bytesread = fis.read(buf, 0, 4);
+      if (bytesread != 4)
+         throw new IOException();
+      return new String(buf);
+   }
 
    public static void writeWav(int[] theResult, int samplerate, File outfile)
    {
@@ -522,62 +554,5 @@ class WavReader
       }
 
       sis.printstats();
-   }
-
-   /*
-    * The following class wraps around a short[] and makes it an InputStream,
-    * returning first the lo byte and then the hi. byte lo = (byte) (sa[i] &
-    * 0xFF); byte hi = (byte) ((sa[i] >> 8) & 0xFF);
-    */
-   static class Short2InputStream extends InputStream
-   {
-      private final short[] sa;
-      private int index;
-      private boolean islow; // next byte is low
-      byte lo, hi;
-      int readcount = 0;
-
-      public Short2InputStream(short[] samples)
-      {
-         sa = samples;
-         index = 0; // next index
-         islow = true; // next byte is low
-      }
-
-      public void printstats()
-      {
-         System.err.println("Short2InputStream: # reads = " + readcount + ", len=" + sa.length
-               + ", index=" + index);
-      }
-
-      @Override
-      public int read()
-      {
-         readcount++;
-         if (index >= sa.length)
-         {
-            return -1; // end of file
-         }
-         else if (islow)
-         {
-            lo = (byte) (sa[index] & 0xFF);
-            hi = (byte) ((sa[index] >> 8) & 0xFF);
-            islow = false;
-            return (lo & 0xFF); // stupid sign extension
-         }
-         else
-         { // is high
-            index++;
-            islow = true;
-            return hi & 0xFF; // ditto
-         }
-      }
-
-      /*
-       * public int read(byte[] b, int off, int len) throws NullPointerException
-       * { for (int i = 0; i < len; i++) { int val = read(); if (val == -1) { //
-       * eof if (i==0) return -1; return 0; } b[off+i] = (byte) val; } return
-       * len; } /*
-       */
    }
 }

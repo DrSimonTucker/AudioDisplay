@@ -27,15 +27,15 @@ public class PerfParser extends FileParser
          if (elems.length == 7)
          {
             AudioSection section = new AudioSection();
-            section.audioFile = null;
-            section.endBar = Integer.parseInt(elems[3]);
-            section.index = 0;
-            section.length = timeConvert(elems[5]) - timeConvert(elems[4]);
-            section.movement = Integer.parseInt(elems[1]);
-            section.offset = timeConvert(elems[4]);
-            section.piece = elems[0];
-            section.startBar = Integer.parseInt(elems[2]);
-            section.repeat = Integer.parseInt(elems[6]);
+            section.setAudioFile(null);
+            section.setEndBar(Integer.parseInt(elems[3]));
+            section.setIndex(0);
+            section.setLength(timeConvert(elems[5]) - timeConvert(elems[4]));
+            section.setMovement(Integer.parseInt(elems[1]));
+            section.setOffset(timeConvert(elems[4]));
+            section.setPiece(elems[0]);
+            section.setStartBar(Integer.parseInt(elems[2]));
+            section.setRepeat(Integer.parseInt(elems[6]));
 
             sections.add(section);
          }
