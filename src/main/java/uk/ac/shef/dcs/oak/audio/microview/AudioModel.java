@@ -14,16 +14,15 @@ import javax.media.Time;
 
 public class AudioModel
 {
-   Player audioPlayer;
-   boolean playing = false;
-   List<AudioModelListener> listeners = new LinkedList<AudioModelListener>();
-   boolean running = true;
-   File audioF;
+   // The sample frequency
+   public static final int fs = 44100;
 
-   public void addListener(AudioModelListener listener)
-   {
-      listeners.add(listener);
-   }
+   /** The audio file represented by the model */
+   File audioF;
+   Player audioPlayer;
+   List<AudioModelListener> listeners = new LinkedList<AudioModelListener>();
+   boolean playing = false;
+   boolean running = true;
 
    public AudioModel(File audioFile)
    {
@@ -54,22 +53,9 @@ public class AudioModel
       updateThread.start();
    }
 
-   private void updateListeners()
+   public void addListener(AudioModelListener listener)
    {
-      for (AudioModelListener listener : listeners)
-         listener.playbackUpdated();
-   }
-
-   public void play()
-   {
-      audioPlayer.start();
-      playing = true;
-   }
-
-   public void setPlaybackPerc(double perc)
-   {
-      audioPlayer.setMediaTime(new Time(audioPlayer.getDuration().getSeconds() * perc));
-      updateListeners();
+      listeners.add(listener);
    }
 
    public double getPlaybackPerc()
@@ -81,6 +67,12 @@ public class AudioModel
    {
       WavReader reader = new WavReader(audioF);
       return reader.getSamples();
+   }
+
+   public int[] getSamples(long start, long end)
+   {
+      WavReader reader = new WavReader(audioF);
+      return reader.getSamples(start, end);
    }
 
    private void loadFile(File audioFile)
@@ -105,5 +97,23 @@ public class AudioModel
       {
          e.printStackTrace();
       }
+   }
+
+   public void play()
+   {
+      audioPlayer.start();
+      playing = true;
+   }
+
+   public void setPlaybackPerc(double perc)
+   {
+      audioPlayer.setMediaTime(new Time(audioPlayer.getDuration().getSeconds() * perc));
+      updateListeners();
+   }
+
+   private void updateListeners()
+   {
+      for (AudioModelListener listener : listeners)
+         listener.playbackUpdated();
    }
 }

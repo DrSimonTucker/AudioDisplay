@@ -10,12 +10,44 @@ import java.util.TreeMap;
 
 public class SympatheticAudioModel extends AudioModel implements AudioModelListener
 {
-   AudioModel sympMod;
-   Map<Double, Double> syncMap = new TreeMap<Double, Double>();
    Map<Double, Double> adjMap = null;
    int[] cutSamples;
-   boolean stretch = true;
+   long endSamples;
    double lowerBound = 0.05;
+   long startSamples;
+   boolean stretch = false;
+   AudioModel sympMod;
+   Map<Double, Double> syncMap = new TreeMap<Double, Double>();
+
+   public SympatheticAudioModel(File f, AudioModel mod, File syncDataFile)
+   {
+      super(f);
+      mod.addListener(this);
+      loadSyncMap(syncDataFile);
+      sympMod = mod;
+
+   }
+
+   @Override
+   public int[] getSamples()
+   {
+      if (stretch)
+      {
+         if (cutSamples == null)
+         {
+            int[] masterSamples = super.getSamples();
+            int offset = ((int) (lowerBound * masterSamples.length));
+            System.out.println("OFFSET = " + offset);
+            cutSamples = new int[(int) (masterSamples.length * (resolveSyncMap(1.0, true)))
+                  - offset];
+            for (int i = offset; i < (cutSamples.length + offset); i++)
+               cutSamples[i - offset] = masterSamples[i];
+         }
+         return cutSamples;
+      }
+      else
+         return super.getSamples(startSamples, endSamples);
+   }
 
    public Map<Double, Double> getSyncMap()
    {
@@ -37,48 +69,15 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
          return syncMap;
    }
 
-   public SympatheticAudioModel(File f, AudioModel mod, File syncDataFile)
-   {
-      super(f);
-      mod.addListener(this);
-      loadSyncMap(syncDataFile);
-      sympMod = mod;
-   }
-
-   @Override
-   public int[] getSamples()
-   {
-      if (stretch)
-      {
-         if (cutSamples == null)
-         {
-            int[] masterSamples = super.getSamples();
-            int offset = ((int) (lowerBound * masterSamples.length));
-            System.out.println("OFFSET = " + offset);
-            cutSamples = new int[(int) (masterSamples.length * (resolveSyncMap(1.0, true)))
-                  - offset];
-            for (int i = offset; i < (cutSamples.length + offset); i++)
-               cutSamples[i - offset] = masterSamples[i];
-         }
-         return cutSamples;
-      }
-      else
-         return super.getSamples();
-   }
-
-   @Override
-   public void playbackUpdated()
-   {
-      setPlaybackPerc(resolveSyncMap(sympMod.getPlaybackPerc()));
-   }
-
    private void loadSyncMap(File f)
    {
       try
       {
-         double topLeft = 459;
-         double topRight = 599;
          BufferedReader reader = new BufferedReader(new FileReader(f));
+         double topLeft = Double.parseDouble(reader.readLine());
+         double topRight = Double.parseDouble(reader.readLine());
+         startSamples = Long.parseLong(reader.readLine());
+         endSamples = Long.parseLong(reader.readLine());
          // syncMap.put(0.0, 0.0);
          syncMap.put(1.0, 1.0);
          for (String line = reader.readLine(); line != null; line = reader.readLine())
@@ -94,6 +93,12 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
       {
          e.printStackTrace();
       }
+   }
+
+   @Override
+   public void playbackUpdated()
+   {
+      setPlaybackPerc(resolveSyncMap(sympMod.getPlaybackPerc()));
    }
 
    private double resolveSyncMap(double perc)

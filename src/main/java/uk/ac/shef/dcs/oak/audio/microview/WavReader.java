@@ -163,6 +163,35 @@ class WavReader
       return samples;
    }
 
+   public int[] getSamples(long startV, long endV)
+   {
+      try
+      {
+         readValue(startV);
+      }
+      catch (IOException e)
+      {
+         e.printStackTrace();
+      }
+      int[] samples = new int[(int) (endV - startV)];
+      for (int i = 0; i < samples.length; i++)
+         try
+         {
+            samples[i] = readValue();
+         }
+         catch (IOException ioe)
+         {
+            System.err.println("WavReader.getSamples: problem at position " + i + " out of "
+                  + numSamples);
+            while (i < numSamples)
+            {
+               samples[i] = 0;
+               i++;
+            }
+         }
+      return samples;
+   }
+
    /*
     * form of assert
     */
@@ -265,6 +294,7 @@ class WavReader
 
          int size = readLEint(fis);
          numSamples = size / channels / sampleSize;
+         System.out.println(numSamples);
          // System.err.println("Number of samples according to header: " +
          // numSamples);
          return true;
@@ -298,6 +328,11 @@ class WavReader
          System.out.println("bad value size = " + vsize + " given to readValue");
          return -1;
       }
+   }
+
+   public void readValue(long samples) throws IOException
+   {
+      readLEshort(fis, (int) samples);
    }
 
    /*
@@ -470,6 +505,17 @@ class WavReader
       if (bytesread != 2)
          throw new IOException();
       return (((buf[1] & 0xff) << 8) | ((buf[0] & 0xff)));
+   }
+
+   /*
+    * reads a 2-byte little-endian integer from the file and returns it
+    */
+   private static void readLEshort(InputStream fis, int samples) throws IOException
+   {
+      byte[] buf = new byte[2 * samples];
+      int bytesread = fis.read(buf, 0, 2 * samples);
+      if (bytesread != 2 * samples)
+         throw new IOException();
    }
 
    /*

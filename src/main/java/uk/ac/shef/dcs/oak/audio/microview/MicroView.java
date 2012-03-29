@@ -14,10 +14,10 @@ public class MicroView extends JPanel
 
    private void initDisplay()
    {
-      AudioModel model = new AudioModel(new File("y6.wav"));
+      AudioModel model = new AudioModel(new File("y1-5.wav"));
       AudioPanel panel = new AudioPanel(model);
-      SympatheticAudioModel sympModel = new SympatheticAudioModel(new File("c6-ex-match.wav"),
-            model, new File("tpath.path"));
+      SympatheticAudioModel sympModel = new SympatheticAudioModel(new File("perf-m2.wav"), model,
+            new File("pathr1-y5.path"));
       AudioPanel panel2 = new AudioPanel(sympModel);
       LinkerPanel panel3 = new LinkerPanel(sympModel);
 
@@ -25,5 +25,7 @@ public class MicroView extends JPanel
       this.add(panel);
       this.add(panel3);
       this.add(panel2);
+
+      model.play();
    }
 }

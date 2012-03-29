@@ -1,6 +1,7 @@
 package uk.ac.shef.dcs.oak.audio.macroview;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
@@ -50,18 +51,23 @@ public class MacroDerivedView extends JFrame
 
       List<AudioSection> rehearsals = new LinkedList<AudioSection>();
       BufferedReader reader = new BufferedReader(new FileReader(new File("dfile.txt")));
+      int count = 1;
       for (String line = reader.readLine(); line != null; line = reader.readLine())
       {
          String[] elems = line.trim().split("\\s+");
-         int number = Integer.parseInt(elems[0]);
+         String number = elems[0];
          double perc = Double.parseDouble(elems[2]);
 
          AudioSection rehearsal = new AudioSection();
          rehearsal.setAudioFile("y" + number + ".wav");
+         if (number.startsWith("1"))
+            rehearsal.setCol(Color.red);
+         else
+            rehearsal.setCol(Color.green);
          rehearsal.setStartBar(1000 * perc);
          rehearsal.setEndBar(-performance.getLength());
          rehearsal.setPiece("Haydn");
-         rehearsal.setIndex(number);
+         rehearsal.setIndex(count++);
          rehearsal.setLength(-1);
          rehearsal.setMovement(2);
          rehearsal.setOffset(0);

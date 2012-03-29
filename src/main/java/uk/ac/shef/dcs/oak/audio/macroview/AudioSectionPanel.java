@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 public class AudioSectionPanel extends JPanel
@@ -186,8 +187,8 @@ public class AudioSectionPanel extends JPanel
       g.setColor(Color.BLACK);
       for (AudioSection section : performance)
          paintBar(g, section.getStartBar() / maxBar, section.getEndBar() / maxBar, 0, section);
-      g.setColor(Color.RED);
 
+      g.setColor(Color.RED);
       // Paint in the other bars
       for (int i = 0; i < sections.size(); i++)
       {
@@ -290,6 +291,18 @@ public class AudioSectionPanel extends JPanel
 
       if (count > 0 && count < 3)
          parent.zoom();
+   }
+
+   public static void main(String[] args)
+   {
+      AudioSectionPanel panel = new AudioSectionPanel(null);
+      panel.loadData("Haydn", 2);
+      JFrame framer = new JFrame();
+      framer.add(panel);
+      framer.setSize(500, 500);
+      framer.setLocationRelativeTo(null);
+      framer.setVisible(true);
+      framer.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
    }
 
 }
