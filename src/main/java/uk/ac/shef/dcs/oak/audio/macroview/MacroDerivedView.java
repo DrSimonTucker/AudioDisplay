@@ -108,7 +108,7 @@ public class MacroDerivedView extends JFrame
    public void zoom()
    {
       // Build the necessary micro view
-      micro = new MicroView();
+      micro = new MicroView("perf-m2.wav", "r2-p3");
 
       // Flip the two displays
       this.remove(sectionPanel);

@@ -7,17 +7,17 @@ import javax.swing.JPanel;
 
 public class MicroView extends JPanel
 {
-   public MicroView()
+   public MicroView(String main, String sub)
    {
-      initDisplay();
+      initDisplay(main, sub);
    }
 
-   private void initDisplay()
+   private void initDisplay(String main, String sub)
    {
-      AudioModel model = new AudioModel(new File("y1-5.wav"));
+      AudioModel model = new AudioModel(new File(sub + ".wav"));
       AudioPanel panel = new AudioPanel(model);
-      SympatheticAudioModel sympModel = new SympatheticAudioModel(new File("perf-m2.wav"), model,
-            new File("pathr1-y5.path"));
+      SympatheticAudioModel sympModel = new SympatheticAudioModel(new File(main), model, new File(
+            "path-" + sub), new File("elems-" + sub));
       AudioPanel panel2 = new AudioPanel(sympModel);
       LinkerPanel panel3 = new LinkerPanel(sympModel);
 

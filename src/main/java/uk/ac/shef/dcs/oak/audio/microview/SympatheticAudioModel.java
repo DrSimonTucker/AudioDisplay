@@ -19,11 +19,11 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    AudioModel sympMod;
    Map<Double, Double> syncMap = new TreeMap<Double, Double>();
 
-   public SympatheticAudioModel(File f, AudioModel mod, File syncDataFile)
+   public SympatheticAudioModel(File f, AudioModel mod, File syncDataFile, File elems)
    {
       super(f);
       mod.addListener(this);
-      loadSyncMap(syncDataFile);
+      loadSyncMap(syncDataFile, elems);
       sympMod = mod;
 
    }
@@ -69,15 +69,19 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
          return syncMap;
    }
 
-   private void loadSyncMap(File f)
+   private void loadSyncMap(File f, File elemFile)
    {
       try
       {
+         BufferedReader elemReader = new BufferedReader(new FileReader(elemFile));
+         String[] bits = elemReader.readLine().trim().split("\\s+");
+         System.out.println(bits.length);
+         double topLeft = Double.parseDouble(bits[0]);
+         double topRight = Double.parseDouble(bits[1]);
+         startSamples = (long) Double.parseDouble(bits[2]);
+         endSamples = (long) Double.parseDouble(bits[3]);
          BufferedReader reader = new BufferedReader(new FileReader(f));
-         double topLeft = Double.parseDouble(reader.readLine());
-         double topRight = Double.parseDouble(reader.readLine());
-         startSamples = Long.parseLong(reader.readLine());
-         endSamples = Long.parseLong(reader.readLine());
+
          // syncMap.put(0.0, 0.0);
          syncMap.put(1.0, 1.0);
          for (String line = reader.readLine(); line != null; line = reader.readLine())

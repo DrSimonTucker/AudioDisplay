@@ -2,26 +2,17 @@ package uk.ac.shef.dcs.oak.audio.microview;
 
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 public class AudioPanel extends JPanel implements AudioModelListener
 {
-   int[] samples;
    int maxVal = 0;
-
-   @Override
-   public void playbackUpdated()
-   {
-      repaint();
-   }
-
    private final AudioModel model;
+
+   int[] samples;
 
    public AudioPanel(AudioModel mod)
    {
@@ -78,27 +69,10 @@ public class AudioPanel extends JPanel implements AudioModelListener
       }
    }
 
-   public static void main(String[] args)
+   @Override
+   public void playbackUpdated()
    {
-      AudioModel model = new AudioModel(new File("y6.wav"));
-      AudioPanel panel = new AudioPanel(model);
-      SympatheticAudioModel sympModel = new SympatheticAudioModel(new File("c6-ex-match.wav"),
-            model, new File("tpath.path"));
-      AudioPanel panel2 = new AudioPanel(sympModel);
-      LinkerPanel panel3 = new LinkerPanel(sympModel);
-
-      JFrame framer = new JFrame();
-      framer.setLayout(new GridLayout(3, 1));
-      framer.add(panel);
-      framer.add(panel3);
-      framer.add(panel2);
-      framer.setSize(500, 500);
-      framer.setLocationRelativeTo(null);
-      framer.setVisible(true);
-      framer.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-      framer.setExtendedState(JFrame.MAXIMIZED_BOTH);
-
-      model.play();
+      repaint();
    }
+
 }
