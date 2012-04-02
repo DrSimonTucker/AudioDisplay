@@ -17,6 +17,8 @@ import uk.ac.shef.dcs.oak.audio.microview.MicroView;
 
 public class MacroDerivedView extends JFrame
 {
+   ControlsPanel cPanel;
+
    MicroView micro;
 
    AudioSectionPanel sectionPanel;
@@ -86,6 +88,10 @@ public class MacroDerivedView extends JFrame
          sectionPanel.addAudio(section);
       this.add(sectionPanel, BorderLayout.CENTER);
       this.add(selectionPanel, BorderLayout.NORTH);
+
+      cPanel = new ControlsPanel();
+      this.add(cPanel, BorderLayout.SOUTH);
+
       this.setSize(500, 522);
       this.setLocationRelativeTo(null);
 
@@ -105,10 +111,17 @@ public class MacroDerivedView extends JFrame
       });
    }
 
+   public void playing(AudioSection section)
+   {
+      cPanel.setSection(section);
+   }
+
    public void zoom()
    {
       // Build the necessary micro view
       micro = new MicroView("perf-m2.wav", "r2-p3");
+
+      cPanel.setMicroModel(micro.getModel());
 
       // Flip the two displays
       this.remove(sectionPanel);

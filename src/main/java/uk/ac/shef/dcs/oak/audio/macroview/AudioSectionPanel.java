@@ -84,8 +84,6 @@ public class AudioSectionPanel extends JPanel
 
    private void leftClick(Point mPoint)
    {
-      if (cursor.section != null)
-         cursor.section.stop();
 
       // Locate the AudioSelection chosen
       chosen = null;
@@ -103,11 +101,15 @@ public class AudioSectionPanel extends JPanel
          }
       }
 
+      if (cursor.section != null && cursor.section != chosen)
+         cursor.section.stop();
+
       // Move the cursor
       if (chosen != null)
       {
          cursor.moveCursor(chosen, perc, rectang, this);
          chosen.play(perc, this);
+         parent.playing(chosen);
       }
    }
 

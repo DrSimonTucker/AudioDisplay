@@ -1,8 +1,7 @@
 package uk.ac.shef.dcs.oak.audio.macroview;
 
 import java.awt.Color;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.File;
 
 import javax.media.Manager;
 import javax.media.Player;
@@ -20,11 +19,13 @@ public class AudioSection
    private int movement;
    private long offset;
    private String piece;
+   boolean playing = false;
    private final AudioSection preceeding = null;
    private String rehearsal;
    private int repeat = 0;
    private final Color selColor = Color.green;
    private boolean selected = false;
+
    private double startBar;
 
    public AudioSection()
@@ -42,6 +43,12 @@ public class AudioSection
    public boolean contains(double bar)
    {
       return startBar <= bar && endBar >= bar;
+   }
+
+   public void deselect()
+   {
+      playing = false;
+      aPlayer.stop();
    }
 
    public Player getaPlayer()
@@ -141,10 +148,11 @@ public class AudioSection
       if (aPlayer == null)
          try
          {
-            InputStream is = getClass().getResourceAsStream(audioFile);
-            if (is == null)
-               is = new FileInputStream(audioFile);
-            aPlayer = Manager.createRealizedPlayer(new StreamSource(is));
+            // InputStream is = getClass().getResourceAsStream(audioFile);
+            // if (is == null)
+            // is = new FileInputStream(audioFile);
+            // aPlayer = Manager.createRealizedPlayer(new StreamSource(is));
+            aPlayer = Manager.createRealizedPlayer(new File(audioFile).toURI().toURL());
          }
          catch (Exception e)
          {
@@ -152,48 +160,78 @@ public class AudioSection
          }
    }
 
+   public boolean isPlaying()
+   {
+      return aPlayer.getState() == Player.Started;
+   }
+
+   public void pause()
+   {
+      aPlayer.stop();
+   }
+
+   public void play()
+   {
+      playing = true;
+      initAudio();
+      aPlayer.start();
+   }
+
    public void play(double perc, final AudioSectionPanel panel)
    {
+      // playing = true;
       initAudio();
       aPlayer.setMediaTime(new Time(getLength() * perc + offset));
       System.out.println("Playing from " + (getLength() * perc + offset));
-      aPlayer.start();
 
-      Thread uThread = new Thread(new Runnable()
+      if (!playing)
       {
-         @Override
-         public void run()
+         System.out.println("Playing " + offset);
+         aPlayer.start();
+         Thread uThread = new Thread(new Runnable()
          {
-            while (true)
-               try
-               {
-                  Thread.sleep(1000);
-                  if (aPlayer.getState() == Player.Started
-                        && (aPlayer.getMediaTime().getSeconds() - offset < length))
+            @Override
+            public void run()
+            {
+               while (true)
+                  try
                   {
-                     double nPerc = (aPlayer.getMediaTime().getSeconds() - offset) / length;
-                     panel.updateCursorPerc(nPerc);
-                  }
-                  else
-                  {
-                     aPlayer.stop();
-                     break;
-                  }
+                     Thread.sleep(1000);
+                     if (playing && (aPlayer.getMediaTime().getSeconds() - offset < length))
+                     {
+                        System.out.println(aPlayer + " and " + aPlayer.getMediaTime().getSeconds());
+                        double nPerc = (aPlayer.getMediaTime().getSeconds() - offset) / length;
+                        panel.updateCursorPerc(nPerc);
+                     }
+                     else
+                     {
+                        playing = false;
+                        aPlayer.stop();
+                        break;
+                     }
 
-               }
-               catch (InterruptedException e)
-               {
-                  e.printStackTrace();
-               }
-         }
-      });
-      uThread.start();
+                  }
+                  catch (InterruptedException e)
+                  {
+                     e.printStackTrace();
+                  }
+            }
+         });
+         uThread.start();
+      }
+
+      playing = true;
 
    }
 
    public void playBar(double bar, final AudioSectionPanel panel)
    {
       play(startBar + ((bar - startBar) / (endBar - startBar)), panel);
+   }
+
+   public void rewind()
+   {
+      aPlayer.setMediaTime(new Time(0));
    }
 
    public void setaPlayer(Player aPlayer)
