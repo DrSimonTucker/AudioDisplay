@@ -17,6 +17,7 @@ public class AudioModel
    // The sample frequency
    public static final int fs = 44100;
 
+   boolean audio = true;
    /** The audio file represented by the model */
    File audioF;
    Player audioPlayer;
@@ -29,6 +30,7 @@ public class AudioModel
       audioF = audioFile;
       loadFile(audioFile);
 
+      final AudioModel modd = this;
       Thread updateThread = new Thread(new Runnable()
       {
          @Override
@@ -38,12 +40,15 @@ public class AudioModel
             {
                try
                {
-                  Thread.sleep(100);
+                  Thread.sleep(1000);
                }
                catch (InterruptedException e)
                {
                   e.printStackTrace();
                }
+
+               // System.out.println(modd + " and " +
+               // modd.audioPlayer.getMediaTime().getSeconds());
 
                if (playing)
                   updateListeners();
@@ -56,6 +61,11 @@ public class AudioModel
    public void addListener(AudioModelListener listener)
    {
       listeners.add(listener);
+   }
+
+   public void forcePlaybackPerc(double perc)
+   {
+      setPlaybackPerc(perc);
    }
 
    public double getPlaybackPerc()
@@ -73,6 +83,11 @@ public class AudioModel
    {
       WavReader reader = new WavReader(audioF);
       return reader.getSamples(start, end);
+   }
+
+   public boolean isActive()
+   {
+      return audio;
    }
 
    public boolean isPlaying()
@@ -106,11 +121,14 @@ public class AudioModel
 
    public void pause()
    {
+      System.out.println(this + " PAUSED");
       audioPlayer.stop();
+      playing = false;
    }
 
    public void play()
    {
+      System.out.println(this + " PLAYING");
       audioPlayer.start();
       playing = true;
    }
@@ -120,13 +138,25 @@ public class AudioModel
       audioPlayer.setMediaTime(new Time(0));
    }
 
+   protected void setActive(boolean val)
+   {
+      audio = val;
+      if (val)
+         play();
+      else
+         pause();
+   }
+
    public void setPlaybackPerc(double perc)
    {
+      // System.out
+      // .println(this + " Setting media time => " + perc + " and " +
+      // audioPlayer.getState());
       audioPlayer.setMediaTime(new Time(audioPlayer.getDuration().getSeconds() * perc));
       updateListeners();
    }
 
-   private void updateListeners()
+   protected void updateListeners()
    {
       for (AudioModelListener listener : listeners)
          listener.playbackUpdated();

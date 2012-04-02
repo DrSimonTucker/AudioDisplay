@@ -6,13 +6,15 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-import uk.ac.shef.dcs.oak.audio.microview.AudioModel;
+import uk.ac.shef.dcs.oak.audio.microview.SympatheticAudioModel;
 
 public class ControlsPanel extends JPanel
 {
    AudioSection base = null;
    JButton fwdButton, rewButton, playButton;
-   AudioModel microModel = null;
+   SympatheticAudioModel microModel = null;
+
+   JButton switchButton;
 
    public ControlsPanel()
    {
@@ -93,13 +95,27 @@ public class ControlsPanel extends JPanel
          }
       });
 
+      switchButton = new JButton("Switch");
+      switchButton.setVisible(false);
+      this.add(switchButton);
+      switchButton.addActionListener(new ActionListener()
+      {
+         @Override
+         public void actionPerformed(ActionEvent e)
+         {
+            if (microModel != null)
+               microModel.switchModel();
+         }
+      });
    }
 
-   public void setMicroModel(AudioModel model)
+   public void setMicroModel(SympatheticAudioModel model)
    {
       microModel = model;
       base = null;
+      switchButton.setVisible(true);
       enable();
+      playButton.setText("Pause");
    }
 
    public void setSection(AudioSection section)
