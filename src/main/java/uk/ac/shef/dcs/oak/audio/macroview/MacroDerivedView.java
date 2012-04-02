@@ -121,6 +121,8 @@ public class MacroDerivedView extends JFrame
       // Build the necessary micro view
       micro = new MicroView("perf-m2.wav", "r2-p3");
 
+      cPanel.setMicroModel(micro.getModel());
+
       // Flip the two displays
       this.remove(sectionPanel);
       this.add(micro, BorderLayout.CENTER);

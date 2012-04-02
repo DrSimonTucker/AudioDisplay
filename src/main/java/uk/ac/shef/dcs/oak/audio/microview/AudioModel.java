@@ -75,6 +75,11 @@ public class AudioModel
       return reader.getSamples(start, end);
    }
 
+   public boolean isPlaying()
+   {
+      return playing;
+   }
+
    private void loadFile(File audioFile)
    {
       try
@@ -99,10 +104,20 @@ public class AudioModel
       }
    }
 
+   public void pause()
+   {
+      audioPlayer.stop();
+   }
+
    public void play()
    {
       audioPlayer.start();
       playing = true;
+   }
+
+   public void rewind()
+   {
+      audioPlayer.setMediaTime(new Time(0));
    }
 
    public void setPlaybackPerc(double perc)

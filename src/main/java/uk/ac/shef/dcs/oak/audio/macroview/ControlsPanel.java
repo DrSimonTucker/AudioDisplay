@@ -6,15 +6,35 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import uk.ac.shef.dcs.oak.audio.microview.AudioModel;
+
 public class ControlsPanel extends JPanel
 {
    AudioSection base = null;
-
    JButton fwdButton, rewButton, playButton;
+   AudioModel microModel = null;
 
    public ControlsPanel()
    {
       initGUI();
+   }
+
+   @Override
+   public void enable()
+   {
+      // fwdButton.setEnabled(true);
+      rewButton.setEnabled(true);
+      playButton.setEnabled(true);
+      if (base != null)
+         if (base.isPlaying())
+            playButton.setText("Pause");
+         else
+            playButton.setText("Play");
+      else if (microModel != null)
+         if (microModel.isPlaying())
+            playButton.setText("Pause");
+         else
+            playButton.setText("Play");
    }
 
    private void initGUI()
@@ -33,6 +53,8 @@ public class ControlsPanel extends JPanel
          {
             if (base != null)
                base.rewind();
+            else if (microModel != null)
+               microModel.rewind();
          }
       });
 
@@ -47,13 +69,25 @@ public class ControlsPanel extends JPanel
             if (playButton.getText().equals("Play"))
             {
                if (base != null)
+               {
                   base.play();
-               playButton.setText("Pause");
+                  playButton.setText("Pause");
+               }
+               else if (microModel != null)
+               {
+                  microModel.play();
+                  playButton.setText("Pause");
+               }
             }
-            else
+            else if (base != null)
+
             {
-               if (base != null)
-                  base.pause();
+               base.pause();
+               playButton.setText("Play");
+            }
+            else if (microModel != null)
+            {
+               microModel.pause();
                playButton.setText("Play");
             }
          }
@@ -61,16 +95,17 @@ public class ControlsPanel extends JPanel
 
    }
 
+   public void setMicroModel(AudioModel model)
+   {
+      microModel = model;
+      base = null;
+      enable();
+   }
+
    public void setSection(AudioSection section)
    {
       base = section;
-
-      // fwdButton.setEnabled(true);
-      rewButton.setEnabled(true);
-      playButton.setEnabled(true);
-      if (section.isPlaying())
-         playButton.setText("Pause");
-      else
-         playButton.setText("Play");
+      microModel = null;
+      enable();
    }
 }
