@@ -16,14 +16,14 @@ public class StreamSource extends PullDataSource
 {
    class InputStreamPullStream implements PullSourceStream, Seekable
    {
+      byte[] headerBuffer;
+      int headerPointer = 0;
       protected InputStream in;
       protected long streamPoint;
+
       protected long tellPoint;
+
       protected ContentDescriptor unknownCD = new ContentDescriptor("unknown");
-
-      byte[] headerBuffer;
-
-      int headerPointer = 0;
 
       public InputStreamPullStream(InputStream in)
       {
@@ -61,6 +61,7 @@ public class StreamSource extends PullDataSource
       @Override
       public long getContentLength()
       {
+         System.err.println("Getting content length");
          return SourceStream.LENGTH_UNKNOWN;
       }
 
@@ -77,131 +78,11 @@ public class StreamSource extends PullDataSource
          return EMPTY_OBJECT_ARRAY;
       }
 
-      // spec'ed by Seekable
-      @Override
-      public boolean isRandomAccess()
-      {
-         return false;
-      }
-
-      public void open() throws IOException
-      {
-         tellPoint = 0;
-      }
-
-      @Override
-      public int read(byte[] buf, int off, int length) throws IOException
-      {
-         // Build the header if we need to
-         if (headerPointer == -1)
-         {
-            System.err.println("Fixing the audio format");
-            // FIX THE AUDIO FORMAT
-            int sf = in.read() + in.read() * 256;
-            int nchannels = in.read();
-            int ssize = in.read();
-            headerBuffer = new byte[44];
-            insertWAVEHeader(headerBuffer, sf, nchannels, ssize);
-            headerPointer = 0;
-         }
-         else
-            headerBuffer = new byte[0];
-
-         if (headerPointer < headerBuffer.length)
-         {
-            int readSize = length - (headerBuffer.length - headerPointer);
-
-            // Fill from the header buffer
-            int bufRead = 0;
-            int pointerAtStart = headerPointer;
-            while (headerPointer < headerBuffer.length && bufRead < length)
-            {
-               buf[off + bufRead] = headerBuffer[headerPointer++];
-               bufRead++;
-            }
-
-            // Now add proper data
-            int bytesRead = headerPointer - pointerAtStart;
-            if (readSize > 0)
-               bytesRead += in.read(buf, off + bufRead, readSize);
-
-            return bytesRead;
-         }
-         else
-         {
-            int bytesRead = in.read(buf, off, length);
-            tellPoint += bytesRead;
-            return bytesRead;
-         }
-      }
-
-      @Override
-      public long seek(long position)
-      {
-
-         // approach -- if seek is further in than tell,
-         // then just skip bytes to get there
-         // else close, reopen, and skip to position
-         try
-         {
-            if (position >= tellPoint)
-               thoroughSkip(position - tellPoint);
-            else
-            {
-               close();
-               open();
-               // now skip to this position
-               thoroughSkip(position);
-            }
-            return tellPoint;
-         }
-         catch (IOException ioe)
-         {
-            return 0; // bogus... who even knows where we are now?
-         }
-      }
-
-      @Override
-      public long tell()
-      {
-         return tellPoint;
-      }
-
-      public void thoroughSkip(long skipCount) throws IOException
-      {
-         try
-         {
-            long totalSkipped = 0;
-            while (totalSkipped < skipCount)
-            {
-               long skipped = in.skip(skipCount - totalSkipped);
-               totalSkipped += skipped;
-               tellPoint += skipped;
-            }
-         }
-         catch (IOException e)
-         {
-            e.printStackTrace();
-            System.exit(1);
-         }
-      }
-
-      @Override
-      public boolean willReadBlock()
-      {
-         try
-         {
-            return (in.available() > 0);
-         }
-         catch (IOException ioe)
-         {
-            return true;
-         }
-      }
-
       private void insertWAVEHeader(byte[] buffer, int sampleFrequency, int noChannels,
             int sampleSize)
       {
+         System.err.println("INSERTING WAVE HEADER");
+
          // Insert the preamble
          String preamb1 = "RIFF";
          byte[] bArr = preamb1.getBytes();
@@ -256,6 +137,133 @@ public class StreamSource extends PullDataSource
          buffer[41] = (byte) 1;
          buffer[42] = (byte) 1;
          buffer[43] = (byte) 1;
+      }
+
+      // spec'ed by Seekable
+      @Override
+      public boolean isRandomAccess()
+      {
+         return false;
+      }
+
+      public void open() throws IOException
+      {
+         tellPoint = 0;
+      }
+
+      @Override
+      public int read(byte[] buf, int off, int length) throws IOException
+      {
+         System.err.println("Reading from Stream " + length);
+         // Build the header if we need to
+         if (headerPointer == -1)
+         {
+            System.err.println("Fixing the audio format");
+            // FIX THE AUDIO FORMAT
+            int sf = in.read() + in.read() * 256;
+            int nchannels = in.read();
+            int ssize = in.read();
+            headerBuffer = new byte[44];
+            insertWAVEHeader(headerBuffer, sf, nchannels, ssize);
+            headerPointer = 0;
+         }
+         else
+            headerBuffer = new byte[0];
+
+         if (headerPointer < headerBuffer.length)
+         {
+            int readSize = length - (headerBuffer.length - headerPointer);
+
+            // Fill from the header buffer
+            int bufRead = 0;
+            int pointerAtStart = headerPointer;
+            while (headerPointer < headerBuffer.length && bufRead < length)
+            {
+               buf[off + bufRead] = headerBuffer[headerPointer++];
+               bufRead++;
+            }
+
+            // Now add proper data
+            int bytesRead = headerPointer - pointerAtStart;
+            if (readSize > 0)
+               bytesRead += in.read(buf, off + bufRead, readSize);
+
+            return bytesRead;
+         }
+         else
+         {
+            int bytesRead = in.read(buf, off, length);
+            tellPoint += bytesRead;
+            return bytesRead;
+         }
+      }
+
+      @Override
+      public long seek(long position)
+      {
+
+         System.err.println("Seeking: " + position);
+
+         // approach -- if seek is further in than tell,
+         // then just skip bytes to get there
+         // else close, reopen, and skip to position
+         try
+         {
+            if (position >= tellPoint)
+               thoroughSkip(position - tellPoint);
+            else
+            {
+               System.err.println("Skipping backwards");
+               close();
+               open();
+               // now skip to this position
+               thoroughSkip(position);
+            }
+            return tellPoint;
+         }
+         catch (IOException ioe)
+         {
+            return 0; // bogus... who even knows where we are now?
+         }
+      }
+
+      @Override
+      public long tell()
+      {
+         return tellPoint;
+      }
+
+      public void thoroughSkip(long skipCount) throws IOException
+      {
+         System.err.println("SKIPPING THOROUGH");
+         try
+         {
+            long totalSkipped = 0;
+            while (totalSkipped < skipCount)
+            {
+               long skipped = in.skip(skipCount - totalSkipped);
+               totalSkipped += skipped;
+               tellPoint += skipped;
+            }
+         }
+         catch (IOException e)
+         {
+            e.printStackTrace();
+            System.exit(1);
+         }
+      }
+
+      @Override
+      public boolean willReadBlock()
+      {
+         try
+         {
+            return (in.available() > 0);
+         }
+         catch (IOException ioe)
+         {
+            return true;
+         }
       }
    }
 
