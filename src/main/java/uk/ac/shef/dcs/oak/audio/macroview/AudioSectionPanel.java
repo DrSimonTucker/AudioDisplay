@@ -39,7 +39,7 @@ public class AudioSectionPanel extends JPanel
    MacroDerivedView parent;
    List<AudioSection> performance;
    List<AudioSection> sections = new LinkedList<AudioSection>();
-   AudioSection[] selected = new AudioSection[2];
+   AudioSection[] selected = new AudioSection[1];
    int selectedPointer = 0;
 
    public AudioSectionPanel(MacroDerivedView par)
