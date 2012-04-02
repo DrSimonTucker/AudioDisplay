@@ -63,7 +63,7 @@ public class MacroDerivedView extends JFrame
          if (number.startsWith("1"))
             rehearsal.setCol(Color.red);
          else
-            rehearsal.setCol(Color.green);
+            rehearsal.setCol(Color.magenta);
          rehearsal.setStartBar(1000 * perc);
          rehearsal.setEndBar(-performance.getLength());
          rehearsal.setPiece("Haydn");
