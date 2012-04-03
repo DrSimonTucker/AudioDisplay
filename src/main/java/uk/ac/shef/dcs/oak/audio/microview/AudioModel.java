@@ -31,7 +31,6 @@ public class AudioModel
       audioF = audioFile;
       loadFile(audioFile);
 
-      final AudioModel modd = this;
       Thread updateThread = new Thread(new Runnable()
       {
          @Override
