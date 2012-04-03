@@ -294,7 +294,6 @@ class WavReader
 
          int size = readLEint(fis);
          numSamples = size / channels / sampleSize;
-         System.out.println(numSamples);
          // System.err.println("Number of samples according to header: " +
          // numSamples);
          return true;

@@ -20,6 +20,7 @@ public class AudioModel
    /** The audio file represented by the model */
    File audioF;
    Player audioPlayer;
+   boolean clicking = false;
    long end = -1;
    List<AudioModelListener> listeners = new LinkedList<AudioModelListener>();
    boolean playing = false;
@@ -47,11 +48,8 @@ public class AudioModel
                   e.printStackTrace();
                }
 
-               // System.out.println(modd + " and " +
-               // modd.audioPlayer.getMediaTime().getSeconds());
-
-               if (playing)
-                  updateListeners();
+               if (playing && !clicking)
+                  updateListeners(false);
             }
          }
       });
@@ -65,8 +63,9 @@ public class AudioModel
 
    public void forcePlaybackPerc(double perc)
    {
-      System.out.println(this + " => " + perc);
-      setPlaybackPerc(perc);
+      clicking = true;
+      setPlaybackPerc(perc, true);
+      clicking = false;
    }
 
    public double getPlaybackPerc()
@@ -123,26 +122,22 @@ public class AudioModel
       {
          e.printStackTrace();
       }
+
    }
 
    public void pause()
    {
-      System.out.println(this + " PAUSED");
-      // audioPlayer.stop();
+      audioPlayer.stop();
       audioPlayer.getGainControl().setMute(true);
       playing = false;
    }
 
    public void play()
    {
-      System.out.println(this + " PLAYING");
       // Set the volume to max
       audioPlayer.getGainControl().setMute(false);
       if (audioPlayer.getState() != Player.Started)
-      {
-         System.out.println(this + " STARTING");
          audioPlayer.start();
-      }
       playing = true;
    }
 
@@ -160,7 +155,7 @@ public class AudioModel
       audio = val;
    }
 
-   public void setPlaybackPerc(double perc)
+   public void setPlaybackPerc(double perc, boolean click)
    {
       double actualPerc = perc;
       if (end > 0)
@@ -169,17 +164,13 @@ public class AudioModel
          double overallSamps = samps + start;
          actualPerc = overallSamps / (audioPlayer.getDuration().getSeconds() * fs);
       }
-      System.out.println(this + " Setting media time => " + perc + "," + actualPerc + " and "
-            + audioPlayer.getState() + " and " + audioPlayer.getDuration().getSeconds() + " given "
-            + end);
       audioPlayer.setMediaTime(new Time(audioPlayer.getDuration().getSeconds() * actualPerc));
-      updateListeners();
+      updateListeners(click);
    }
 
-   protected void updateListeners()
+   protected void updateListeners(boolean click)
    {
-      // System.out.println("Updating: " + listeners.size());
       for (AudioModelListener listener : listeners)
-         listener.playbackUpdated();
+         listener.playbackUpdated(click);
    }
 }
