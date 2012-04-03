@@ -23,6 +23,8 @@ public class MacroDerivedView extends JFrame
 
    AudioSectionPanel sectionPanel;
 
+   String selected = null;
+
    public MacroDerivedView()
    {
       try
@@ -62,7 +64,7 @@ public class MacroDerivedView extends JFrame
 
          AudioSection rehearsal = new AudioSection();
          rehearsal.setAudioFile("y" + number + ".wav");
-         if (number.startsWith("1"))
+         if (!number.startsWith("2-"))
             rehearsal.setCol(Color.red);
          else
             rehearsal.setCol(Color.magenta);
@@ -118,15 +120,31 @@ public class MacroDerivedView extends JFrame
 
    public void zoom()
    {
-      // Build the necessary micro view
-      micro = new MicroView("perf-m2.wav", "r2-p3");
+      if (selected == null)
+      {
+         selected = sectionPanel.getSelected();
+         System.out.println("CHOSEN = " + selected);
 
-      cPanel.setMicroModel(micro.getModel());
+         // Build the necessary micro view
+         micro = new MicroView("perf-m2.wav", selected);
 
-      // Flip the two displays
-      this.remove(sectionPanel);
-      this.add(micro, BorderLayout.CENTER);
+         cPanel.setMicroModel(micro.getModel());
 
+         // Flip the two displays
+         this.remove(sectionPanel);
+         this.add(micro, BorderLayout.CENTER);
+      }
+      else
+      {
+         micro.stop();
+         this.remove(micro);
+         selected = null;
+         cPanel.setMicroModel(null);
+         this.add(sectionPanel, BorderLayout.CENTER);
+         sectionPanel.repaint();
+      }
+
+      this.invalidate();
       this.validate();
    }
 

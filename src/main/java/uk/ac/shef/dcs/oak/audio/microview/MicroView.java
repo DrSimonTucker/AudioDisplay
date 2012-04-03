@@ -7,6 +7,7 @@ import javax.swing.JPanel;
 
 public class MicroView extends JPanel
 {
+   AudioModel model;
    SympatheticAudioModel sympModel;
 
    public MicroView(String main, String sub)
@@ -21,7 +22,7 @@ public class MicroView extends JPanel
 
    private void initDisplay(String main, String sub)
    {
-      AudioModel model = new AudioModel(new File(sub + ".wav"));
+      model = new AudioModel(new File(sub + ".wav"));
       AudioPanel panel = new AudioPanel(model);
       sympModel = new SympatheticAudioModel(new File(main), model, new File("path-" + sub),
             new File("elems-" + sub));
@@ -34,5 +35,11 @@ public class MicroView extends JPanel
       this.add(panel2);
 
       model.play();
+   }
+
+   public void stop()
+   {
+      sympModel.pause();
+      model.pause();
    }
 }
