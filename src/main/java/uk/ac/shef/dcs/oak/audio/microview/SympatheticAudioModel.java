@@ -46,7 +46,7 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    public void forcePlaybackPerc(double perc)
    {
       if (!isActive())
-         sympMod.setPlaybackPerc(resolveRevSyncMap(perc));
+         sympMod.setPlaybackPerc(resolveRevSyncMap(perc), true);
       else
          super.forcePlaybackPerc(perc);
    }
@@ -58,8 +58,6 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
       {
          if (revAdjMap == null)
          {
-            System.out.println("Getting adj map");
-
             revAdjMap = new TreeMap<Double, Double>();
             double bound = revSyncMap.get(1.0);
             for (Entry<Double, Double> entry : revSyncMap.entrySet())
@@ -81,7 +79,6 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
          {
             int[] masterSamples = super.getSamples();
             int offset = ((int) (lowerBound * masterSamples.length));
-            System.out.println("OFFSET = " + offset);
             cutSamples = new int[(int) (masterSamples.length * (resolveSyncMap(1.0, true)))
                   - offset];
             for (int i = offset; i < (cutSamples.length + offset); i++)
@@ -100,8 +97,6 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
       {
          if (adjMap == null)
          {
-            System.out.println("Getting adj map");
-
             adjMap = new TreeMap<Double, Double>();
             double bound = syncMap.get(1.0);
             for (Entry<Double, Double> entry : syncMap.entrySet())
@@ -119,7 +114,6 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
       {
          BufferedReader elemReader = new BufferedReader(new FileReader(elemFile));
          String[] bits = elemReader.readLine().trim().split("\\s+");
-         System.out.println(bits.length);
          double topLeft = Double.parseDouble(bits[0]);
          double topRight = Double.parseDouble(bits[1]);
          startSamples = (long) Double.parseDouble(bits[2]);
@@ -148,7 +142,6 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    @Override
    public void pause()
    {
-      System.out.println("PAUSE SYMP ACTIVE: " + isActive());
       if (isActive())
          super.pause();
       else if (sympMod != null)
@@ -158,7 +151,6 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    @Override
    public void play()
    {
-      System.out.println("PLAY SYMP ACTIVE: " + isActive());
       if (isActive())
          super.play();
       else if (sympMod != null)
@@ -166,10 +158,12 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    }
 
    @Override
-   public void playbackUpdated()
+   public void playbackUpdated(boolean click)
    {
       if (!isActive())
-         setPlaybackPerc(resolveSyncMap(sympMod.getPlaybackPerc()));
+         setPlaybackPerc(resolveSyncMap(sympMod.getPlaybackPerc()), click);
+      else
+         System.out.println("Ignoring: " + click);
    }
 
    private double resolveRevSyncMap(double perc)
@@ -275,10 +269,10 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    }
 
    @Override
-   public void setPlaybackPerc(double perc)
+   public void setPlaybackPerc(double perc, boolean click)
    {
       // Compute this as a percentage of the overall file
-      super.setPlaybackPerc(perc);
+      super.setPlaybackPerc(perc, click);
    }
 
    public void switchModel()
@@ -297,11 +291,11 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    }
 
    @Override
-   protected void updateListeners()
+   protected void updateListeners(boolean click)
    {
-      super.updateListeners();
+      super.updateListeners(click);
 
       if (isActive())
-         sympMod.setPlaybackPerc(resolveRevSyncMap(getPlaybackPerc()));
+         sympMod.setPlaybackPerc(resolveRevSyncMap(getPlaybackPerc()), click);
    }
 }

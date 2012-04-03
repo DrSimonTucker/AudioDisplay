@@ -19,7 +19,6 @@ public class AudioPanel extends JPanel implements AudioModelListener
       model = mod;
       mod.addListener(this);
       samples = model.getSamples();
-      System.out.println(this + " => " + samples.length);
       for (int val : samples)
          maxVal = Math.max(val, maxVal);
 
@@ -75,7 +74,7 @@ public class AudioPanel extends JPanel implements AudioModelListener
    }
 
    @Override
-   public void playbackUpdated()
+   public void playbackUpdated(boolean click)
    {
       repaint();
    }
