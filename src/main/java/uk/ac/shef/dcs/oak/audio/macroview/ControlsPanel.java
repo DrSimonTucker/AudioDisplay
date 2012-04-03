@@ -113,9 +113,15 @@ public class ControlsPanel extends JPanel
    {
       microModel = model;
       base = null;
-      switchButton.setVisible(true);
-      enable();
-      playButton.setText("Pause");
+      if (model != null)
+      {
+         switchButton.setVisible(true);
+         enable();
+         playButton.setText("Pause");
+      }
+      else
+         switchButton.setVisible(false);
+
    }
 
    public void setSection(AudioSection section)

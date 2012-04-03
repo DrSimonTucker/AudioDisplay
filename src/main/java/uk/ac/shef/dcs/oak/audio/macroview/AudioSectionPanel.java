@@ -82,6 +82,15 @@ public class AudioSectionPanel extends JPanel
       }
    }
 
+   public String getSelected()
+   {
+      AudioSection section = selected[(selectedPointer - 1) % selected.length];
+      if (section != null)
+         return section.getAudioFile().substring(0, section.getAudioFile().length() - 4);
+      else
+         return "";
+   }
+
    private void leftClick(Point mPoint)
    {
 
