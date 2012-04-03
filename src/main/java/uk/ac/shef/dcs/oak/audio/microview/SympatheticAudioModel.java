@@ -20,6 +20,7 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    boolean stretch = false;
    AudioModel sympMod;
    Map<Double, Double> syncMap = new TreeMap<Double, Double>();
+   long totalSamples;
 
    public SympatheticAudioModel(File f, AudioModel mod, File syncDataFile, File elems)
    {
@@ -31,11 +32,23 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
 
    }
 
+   public void forcePause()
+   {
+      super.pause();
+   }
+
+   public void forcePlay()
+   {
+      super.play();
+   }
+
    @Override
    public void forcePlaybackPerc(double perc)
    {
-      System.out.println(this + " =>f " + perc);
-      sympMod.setPlaybackPerc(resolveRevSyncMap(perc));
+      if (!isActive())
+         sympMod.setPlaybackPerc(resolveRevSyncMap(perc));
+      else
+         super.forcePlaybackPerc(perc);
    }
 
    public Map<Double, Double> getRevSyncMap()
@@ -135,6 +148,7 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    @Override
    public void pause()
    {
+      System.out.println("PAUSE SYMP ACTIVE: " + isActive());
       if (isActive())
          super.pause();
       else if (sympMod != null)
@@ -144,6 +158,7 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    @Override
    public void play()
    {
+      System.out.println("PLAY SYMP ACTIVE: " + isActive());
       if (isActive())
          super.play();
       else if (sympMod != null)
@@ -247,6 +262,23 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
          }
 
       return (bestMatchAbove + bestMatchBelow) / 2;
+   }
+
+   @Override
+   protected void setActive(boolean val)
+   {
+      if (val)
+         forcePlay();
+      else
+         forcePause();
+      audio = val;
+   }
+
+   @Override
+   public void setPlaybackPerc(double perc)
+   {
+      // Compute this as a percentage of the overall file
+      super.setPlaybackPerc(perc);
    }
 
    public void switchModel()
