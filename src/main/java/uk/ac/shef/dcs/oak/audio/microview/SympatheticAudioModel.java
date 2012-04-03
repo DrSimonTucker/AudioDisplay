@@ -14,18 +14,62 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    int[] cutSamples;
    long endSamples;
    double lowerBound = 0.05;
+   Map<Double, Double> revAdjMap = null;
+   Map<Double, Double> revSyncMap = new TreeMap<Double, Double>();
    long startSamples;
    boolean stretch = false;
    AudioModel sympMod;
    Map<Double, Double> syncMap = new TreeMap<Double, Double>();
+   long totalSamples;
 
    public SympatheticAudioModel(File f, AudioModel mod, File syncDataFile, File elems)
    {
       super(f);
+      super.setActive(false);
       mod.addListener(this);
       loadSyncMap(syncDataFile, elems);
       sympMod = mod;
 
+   }
+
+   public void forcePause()
+   {
+      super.pause();
+   }
+
+   public void forcePlay()
+   {
+      super.play();
+   }
+
+   @Override
+   public void forcePlaybackPerc(double perc)
+   {
+      if (!isActive())
+         sympMod.setPlaybackPerc(resolveRevSyncMap(perc));
+      else
+         super.forcePlaybackPerc(perc);
+   }
+
+   public Map<Double, Double> getRevSyncMap()
+   {
+      // Adjust the syncMap if stretched
+      if (stretch)
+      {
+         if (revAdjMap == null)
+         {
+            System.out.println("Getting adj map");
+
+            revAdjMap = new TreeMap<Double, Double>();
+            double bound = revSyncMap.get(1.0);
+            for (Entry<Double, Double> entry : revSyncMap.entrySet())
+               revAdjMap
+                     .put(entry.getKey(), (entry.getValue() - lowerBound) / (bound - lowerBound));
+         }
+         return revAdjMap;
+      }
+      else
+         return revSyncMap;
    }
 
    @Override
@@ -84,12 +128,14 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
 
          // syncMap.put(0.0, 0.0);
          syncMap.put(1.0, 1.0);
+         revSyncMap.put(1.0, 1.0);
          for (String line = reader.readLine(); line != null; line = reader.readLine())
          {
             String[] elems = line.trim().split("\\s+");
             Double left = Double.parseDouble(elems[0]);
             Double right = Double.parseDouble(elems[1]);
 
+            revSyncMap.put(right / topRight, left / topLeft);
             syncMap.put(left / topLeft, right / topRight);
          }
       }
@@ -100,9 +146,76 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    }
 
    @Override
+   public void pause()
+   {
+      System.out.println("PAUSE SYMP ACTIVE: " + isActive());
+      if (isActive())
+         super.pause();
+      else if (sympMod != null)
+         sympMod.pause();
+   }
+
+   @Override
+   public void play()
+   {
+      System.out.println("PLAY SYMP ACTIVE: " + isActive());
+      if (isActive())
+         super.play();
+      else if (sympMod != null)
+         sympMod.play();
+   }
+
+   @Override
    public void playbackUpdated()
    {
-      setPlaybackPerc(resolveSyncMap(sympMod.getPlaybackPerc()));
+      if (!isActive())
+         setPlaybackPerc(resolveSyncMap(sympMod.getPlaybackPerc()));
+   }
+
+   private double resolveRevSyncMap(double perc)
+   {
+      return resolveRevSyncMap(perc, false);
+   }
+
+   private double resolveRevSyncMap(double perc, boolean forceOld)
+   {
+      Double closestBelow = 1.0;
+      Double bestMatchBelow = 0.0;
+      Double closestAbove = 1.0;
+      Double bestMatchAbove = 1.0;
+
+      if (!forceOld)
+         for (Entry<Double, Double> entry : getRevSyncMap().entrySet())
+         {
+            double diff = perc - entry.getKey();
+            if (diff >= 0 && diff < closestBelow)
+            {
+               closestBelow = diff;
+               bestMatchBelow = entry.getValue();
+            }
+            if (diff <= 0 && Math.abs(diff) < closestAbove)
+            {
+               closestAbove = diff;
+               bestMatchAbove = entry.getValue();
+            }
+         }
+      else
+         for (Entry<Double, Double> entry : revSyncMap.entrySet())
+         {
+            double diff = perc - entry.getKey();
+            if (diff >= 0 && diff < closestBelow)
+            {
+               closestBelow = diff;
+               bestMatchBelow = entry.getValue();
+            }
+            if (diff <= 0 && Math.abs(diff) < closestAbove)
+            {
+               closestAbove = diff;
+               bestMatchAbove = entry.getValue();
+            }
+         }
+
+      return (bestMatchAbove + bestMatchBelow) / 2;
    }
 
    private double resolveSyncMap(double perc)
@@ -149,5 +262,46 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
          }
 
       return (bestMatchAbove + bestMatchBelow) / 2;
+   }
+
+   @Override
+   protected void setActive(boolean val)
+   {
+      if (val)
+         forcePlay();
+      else
+         forcePause();
+      audio = val;
+   }
+
+   @Override
+   public void setPlaybackPerc(double perc)
+   {
+      // Compute this as a percentage of the overall file
+      super.setPlaybackPerc(perc);
+   }
+
+   public void switchModel()
+   {
+      if (this.isActive())
+      {
+         // Switch to the other model
+         this.setActive(false);
+         sympMod.setActive(true);
+      }
+      else
+      {
+         this.setActive(true);
+         sympMod.setActive(false);
+      }
+   }
+
+   @Override
+   protected void updateListeners()
+   {
+      super.updateListeners();
+
+      if (isActive())
+         sympMod.setPlaybackPerc(resolveRevSyncMap(getPlaybackPerc()));
    }
 }

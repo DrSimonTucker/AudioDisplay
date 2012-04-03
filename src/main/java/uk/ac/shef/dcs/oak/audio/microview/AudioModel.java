@@ -16,19 +16,22 @@ public class AudioModel
 {
    // The sample frequency
    public static final int fs = 44100;
-
+   boolean audio = true;
    /** The audio file represented by the model */
    File audioF;
    Player audioPlayer;
+   long end = -1;
    List<AudioModelListener> listeners = new LinkedList<AudioModelListener>();
    boolean playing = false;
    boolean running = true;
+   long start = -1;
 
    public AudioModel(File audioFile)
    {
       audioF = audioFile;
       loadFile(audioFile);
 
+      final AudioModel modd = this;
       Thread updateThread = new Thread(new Runnable()
       {
          @Override
@@ -45,6 +48,9 @@ public class AudioModel
                   e.printStackTrace();
                }
 
+               // System.out.println(modd + " and " +
+               // modd.audioPlayer.getMediaTime().getSeconds());
+
                if (playing)
                   updateListeners();
             }
@@ -58,9 +64,18 @@ public class AudioModel
       listeners.add(listener);
    }
 
+   public void forcePlaybackPerc(double perc)
+   {
+      System.out.println(this + " => " + perc);
+      setPlaybackPerc(perc);
+   }
+
    public double getPlaybackPerc()
    {
-      return (audioPlayer.getMediaTime().getSeconds()) / audioPlayer.getDuration().getSeconds();
+      if (end > 0)
+         return (audioPlayer.getMediaTime().getSeconds() * fs - start) / (end - start);
+      else
+         return (audioPlayer.getMediaTime().getSeconds()) / audioPlayer.getDuration().getSeconds();
    }
 
    public int[] getSamples()
@@ -71,8 +86,15 @@ public class AudioModel
 
    public int[] getSamples(long start, long end)
    {
+      this.start = start;
+      this.end = end;
       WavReader reader = new WavReader(audioF);
       return reader.getSamples(start, end);
+   }
+
+   public boolean isActive()
+   {
+      return audio;
    }
 
    public boolean isPlaying()
@@ -106,12 +128,22 @@ public class AudioModel
 
    public void pause()
    {
-      audioPlayer.stop();
+      System.out.println(this + " PAUSED");
+      // audioPlayer.stop();
+      audioPlayer.getGainControl().setMute(true);
+      playing = false;
    }
 
    public void play()
    {
-      audioPlayer.start();
+      System.out.println(this + " PLAYING");
+      // Set the volume to max
+      audioPlayer.getGainControl().setMute(false);
+      if (audioPlayer.getState() != Player.Started)
+      {
+         System.out.println(this + " STARTING");
+         audioPlayer.start();
+      }
       playing = true;
    }
 
@@ -120,14 +152,34 @@ public class AudioModel
       audioPlayer.setMediaTime(new Time(0));
    }
 
+   protected void setActive(boolean val)
+   {
+      if (val)
+         play();
+      else
+         pause();
+      audio = val;
+   }
+
    public void setPlaybackPerc(double perc)
    {
-      audioPlayer.setMediaTime(new Time(audioPlayer.getDuration().getSeconds() * perc));
+      double actualPerc = perc;
+      if (end > 0)
+      {
+         double samps = (end - start) * perc;
+         double overallSamps = samps + start;
+         actualPerc = overallSamps / (audioPlayer.getDuration().getSeconds() * fs);
+      }
+      System.out.println(this + " Setting media time => " + perc + "," + actualPerc + " and "
+            + audioPlayer.getState() + " and " + audioPlayer.getDuration().getSeconds() + " given "
+            + end);
+      audioPlayer.setMediaTime(new Time(audioPlayer.getDuration().getSeconds() * actualPerc));
       updateListeners();
    }
 
-   private void updateListeners()
+   protected void updateListeners()
    {
+      // System.out.println("Updating: " + listeners.size());
       for (AudioModelListener listener : listeners)
          listener.playbackUpdated();
    }

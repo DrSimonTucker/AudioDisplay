@@ -29,7 +29,7 @@ public class AudioPanel extends JPanel implements AudioModelListener
          public void mouseClicked(MouseEvent e)
          {
             double perc = (e.getX() + 0.0) / getWidth();
-            System.out.println(perc + " => ");
+            model.forcePlaybackPerc(perc);
          }
       });
    }
@@ -49,6 +49,11 @@ public class AudioPanel extends JPanel implements AudioModelListener
       g.setColor(Color.black);
 
       // Draw the waveform
+      if (model.isActive())
+         g.setColor(Color.magenta);
+      else
+         g.setColor(Color.black);
+
       int counter = samples.length / this.getWidth();
       for (int i = 0; i < this.getWidth(); i++)
       {
