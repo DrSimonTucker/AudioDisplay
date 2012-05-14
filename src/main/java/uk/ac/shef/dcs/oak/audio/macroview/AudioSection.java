@@ -83,6 +83,8 @@ public class AudioSection
          double length = 0 - endBar;
          double numBars = getLength() * 1000 / length;
          endBar = startBar + numBars;
+
+         // System.err.println(index + " and " + startBar + " => " + endBar);
       }
       return endBar;
    }
@@ -168,6 +170,7 @@ public class AudioSection
    public void pause()
    {
       aPlayer.stop();
+      playing = false;
    }
 
    public void play()
@@ -182,11 +185,11 @@ public class AudioSection
       // playing = true;
       initAudio();
       aPlayer.setMediaTime(new Time(getLength() * perc + offset));
-      System.out.println("Playing from " + (getLength() * perc + offset));
+      // System.out.println("Playing from " + (getLength() * perc + offset));
 
       if (!playing)
       {
-         System.out.println("Playing " + offset);
+         // System.out.println("Playing " + offset);
          aPlayer.start();
          Thread uThread = new Thread(new Runnable()
          {
@@ -199,7 +202,9 @@ public class AudioSection
                      Thread.sleep(1000);
                      if (playing && (aPlayer.getMediaTime().getSeconds() - offset < length))
                      {
-                        System.out.println(aPlayer + " and " + aPlayer.getMediaTime().getSeconds());
+                        // System.out.println(aPlayer + " and " +
+                        // aPlayer.getMediaTime().getSeconds()
+                        // + " also " + playing);
                         double nPerc = (aPlayer.getMediaTime().getSeconds() - offset) / length;
                         panel.updateCursorPerc(nPerc);
                      }
@@ -297,6 +302,7 @@ public class AudioSection
    public void stop()
    {
       aPlayer.stop();
+      playing = false;
    }
 
    public void toggleSelect()

@@ -54,7 +54,7 @@ public class MacroDerivedView extends JFrame
       perfSections.add(performance);
 
       List<AudioSection> rehearsals = new LinkedList<AudioSection>();
-      BufferedReader reader = new BufferedReader(new FileReader(new File("dfile.txt")));
+      BufferedReader reader = new BufferedReader(new FileReader(new File("mfile.txt")));
       int count = 1;
       for (String line = reader.readLine(); line != null; line = reader.readLine())
       {

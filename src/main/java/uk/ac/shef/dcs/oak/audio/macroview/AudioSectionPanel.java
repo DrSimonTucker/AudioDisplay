@@ -139,8 +139,9 @@ public class AudioSectionPanel extends JPanel
          if (isp == null)
             isp = new FileInputStream(new File("src/main/resources/etc/perftimings.csv"));
 
-         System.err.println("READING FROM: "
-               + new File("src/main/resources/etc/perftimings.csv").getAbsolutePath());
+         // System.err.println("READING FROM: "
+         // + new
+         // File("src/main/resources/etc/perftimings.csv").getAbsolutePath());
 
          Collection<AudioSection> psections = pparser.readSections(isp);
          for (AudioSection section : psections)
@@ -153,7 +154,7 @@ public class AudioSectionPanel extends JPanel
             else
                System.err.println(section.getPiece() + " and " + section.getMovement());
 
-         System.err.println("PERF = " + performance.size());
+         // System.err.println("PERF = " + performance.size());
 
          for (AudioSection section : performance)
             maxBar = Math.max(maxBar, section.getEndBar());
@@ -328,6 +329,7 @@ class Cursor
 
    public void moveCursor(AudioSection section, double perc, Rectangle rect, JPanel par)
    {
+      // System.out.println("Moving: " + section + " and " + perc);
       this.section = section;
       percPos = perc;
       this.rect = rect;

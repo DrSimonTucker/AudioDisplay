@@ -162,8 +162,8 @@ public class SympatheticAudioModel extends AudioModel implements AudioModelListe
    {
       if (!isActive())
          setPlaybackPerc(resolveSyncMap(sympMod.getPlaybackPerc()), click);
-      else
-         System.out.println("Ignoring: " + click);
+      // else
+      // System.out.println("Ignoring: " + click);
    }
 
    private double resolveRevSyncMap(double perc)
